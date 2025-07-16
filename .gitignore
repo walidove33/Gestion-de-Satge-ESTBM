@@ -1,0 +1,16 @@
+# Node.js / Angular
+**/node_modules/
+**/dist/
+**/.angular/
+
+# IDE (IntelliJ, VS Code)
+**/.vscode/
+**/.idea/
+**/*.iml
+
+# Java build
+**/target/
+
+# OS system files
+.DS_Store
+Thumbs.db
