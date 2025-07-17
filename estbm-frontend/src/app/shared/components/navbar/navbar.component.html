@@ -1,0 +1,116 @@
+<nav class="estbm-navbar">
+  <div class="navbar-container">
+    <!-- Brand Section -->
+    <div class="navbar-brand">
+      <div class="brand-logo">
+        <img src="/assets/logo.png" alt="EST Béni Mellal" class="logo-img" />
+      </div>
+      <div class="brand-text">
+        <h1>EST Béni Mellal</h1>
+        <span>Gestion des Stages</span>
+      </div>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <div class="navbar-nav" [class.active]="mobileMenuOpen">
+      <a [routerLink]="getDashboardRoute()" 
+         routerLinkActive="active" 
+         class="nav-link"
+         (click)="closeMenus()">
+        <i class="bi bi-speedometer2"></i>
+        <span>Tableau de bord</span>
+      </a>
+      
+      <!-- Student Links -->
+      <ng-container *ngIf="currentUser?.role === 'ETUDIANT'">
+        <a routerLink="/student/new-stage" 
+           routerLinkActive="active" 
+           class="nav-link"
+           (click)="closeMenus()">
+          <i class="bi bi-plus-circle"></i>
+          <span>Nouvelle demande</span>
+        </a>
+        
+        <a routerLink="/student/stages" 
+           routerLinkActive="active" 
+           class="nav-link"
+           (click)="closeMenus()">
+          <i class="bi bi-briefcase"></i>
+          <span>Mes stages</span>
+        </a>
+      </ng-container>
+      
+      <!-- Encadrant Links -->
+      <ng-container *ngIf="currentUser?.role === 'ENCADRANT'">
+        <a routerLink="/encadrant/rapports" 
+           routerLinkActive="active" 
+           class="nav-link"
+           (click)="closeMenus()">
+          <i class="bi bi-file-earmark-text"></i>
+          <span>Rapports</span>
+        </a>
+      </ng-container>
+      
+      <!-- Admin Links -->
+      <ng-container *ngIf="currentUser?.role === 'ADMIN'">
+        <a routerLink="/admin/encadrants" 
+           routerLinkActive="active" 
+           class="nav-link"
+           (click)="closeMenus()">
+          <i class="bi bi-people"></i>
+          <span>Encadrants</span>
+        </a>
+        
+        <a routerLink="/admin/admins" 
+           routerLinkActive="active" 
+           class="nav-link"
+           (click)="closeMenus()">
+          <i class="bi bi-shield-check"></i>
+          <span>Administrateurs</span>
+        </a>
+      </ng-container>
+    </div>
+
+    <!-- User Menu -->
+    <div class="navbar-user">
+      <div class="user-info" (click)="toggleUserMenu()">
+        <div class="user-avatar">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ currentUser?.prenom }} {{ currentUser?.nom }}</span>
+          <span class="user-role">{{ getRoleLabel(currentUser?.role) }}</span>
+        </div>
+        <i class="bi bi-chevron-down dropdown-icon" [class.rotated]="userMenuOpen"></i>
+      </div>
+      
+      <div class="user-dropdown" [class.active]="userMenuOpen">
+        <a href="#" class="dropdown-item" (click)="closeMenus()">
+          <i class="bi bi-person"></i>
+          <span>Profil</span>
+        </a>
+        <a href="#" class="dropdown-item" (click)="closeMenus()">
+          <i class="bi bi-gear"></i>
+          <span>Paramètres</span>
+        </a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" (click)="logout($event)">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Déconnexion</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+      <span class="hamburger-line" [class.active]="mobileMenuOpen"></span>
+      <span class="hamburger-line" [class.active]="mobileMenuOpen"></span>
+      <span class="hamburger-line" [class.active]="mobileMenuOpen"></span>
+    </button>
+  </div>
+
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" 
+       [class.active]="mobileMenuOpen || userMenuOpen" 
+       (click)="closeMenus()"></div>
+</nav>
