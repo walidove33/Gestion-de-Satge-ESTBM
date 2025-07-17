@@ -58,3 +58,5 @@ export interface CreateAdminRequest {
   prenom: string
   telephone: string
 }
+
+

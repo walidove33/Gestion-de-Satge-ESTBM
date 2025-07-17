@@ -1,1 +1,249 @@
-<p>stage-list works!</p>
+<app-navbar></app-navbar>
+
+<div class="list-layout">
+  <div class="list-container">
+    <!-- Header -->
+    <div class="list-header">
+      <div class="header-content">
+        <div class="header-text">
+          <h1>
+            <i class="bi bi-list-ul me-3"></i>
+            Mes Stages
+          </h1>
+          <p>Consultez l'historique complet de vos demandes de stage</p>
+        </div>
+        <div class="header-actions">
+          <a routerLink="/student/new-stage" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Nouveau Stage
+          </a>
+          <a routerLink="/student/dashboard" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Retour
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="card">
+        <div class="card-body">
+          <div class="filters-grid">
+            <div class="search-group">
+              <label for="search" class="form-label">
+                <i class="bi bi-search me-2"></i>
+                Rechercher
+              </label>
+              <input 
+                type="text" 
+                id="search"
+                class="form-control" 
+                placeholder="Rechercher par sujet ou entreprise..."
+                [(ngModel)]="searchTerm"
+                (input)="filterStages()">
+            </div>
+            
+            <div class="filter-group">
+              <label for="status" class="form-label">
+                <i class="bi bi-funnel me-2"></i>
+                Filtrer par statut
+              </label>
+              <select 
+                id="status"
+                class="form-control" 
+                [(ngModel)]="statusFilter"
+                (change)="filterStages()">
+                <option value="">Tous les statuts</option>
+                <option value="EN_ATTENTE">En attente</option>
+                <option value="APPROUVE">Approuvé</option>
+                <option value="REJETE">Rejeté</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="TERMINE">Terminé</option>
+              </select>
+            </div>
+            
+            <div class="results-info">
+              <span class="results-count">
+                {{ filteredStages.length }} résultat(s) sur {{ stages.length }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content-section">
+      <div class="card">
+        <div class="card-header">
+          <h3>
+            <i class="bi bi-briefcase me-2"></i>
+            Liste complète de vos stages
+          </h3>
+          <div class="header-stats">
+            <span class="stat-badge stat-total">
+              <i class="bi bi-collection"></i>
+              {{ stages.length }} total
+            </span>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <!-- Loading State -->
+          <div *ngIf="loading" class="loading-state">
+            <div class="spinner spinner-lg"></div>
+            <p>Chargement de vos stages...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && stages.length === 0" class="empty-state">
+            <div class="empty-icon">
+              <i class="bi bi-briefcase"></i>
+            </div>
+            <h4>Aucun stage trouvé</h4>
+            <p>Vous n'avez pas encore de demandes de stage.</p>
+            <a routerLink="/student/new-stage" class="btn btn-primary">
+              <i class="bi bi-plus-circle"></i>
+              Créer votre première demande
+            </a>
+          </div>
+
+          <!-- No Results State -->
+          <div *ngIf="!loading && stages.length > 0 && filteredStages.length === 0" class="empty-state">
+            <div class="empty-icon">
+              <i class="bi bi-search"></i>
+            </div>
+            <h4>Aucun résultat</h4>
+            <p>Aucun stage ne correspond à vos critères de recherche.</p>
+            <button class="btn btn-outline-primary" (click)="searchTerm = ''; statusFilter = ''; filterStages()">
+              <i class="bi bi-arrow-clockwise"></i>
+              Réinitialiser les filtres
+            </button>
+          </div>
+
+          <!-- Stages Grid -->
+          <div *ngIf="!loading && filteredStages.length > 0" class="stages-grid">
+            <div *ngFor="let stage of filteredStages" class="stage-card">
+              <div class="stage-header">
+                <div class="stage-title">
+                  <h4>{{ stage.sujet }}</h4>
+                  <span class="badge" [ngClass]="getStatusClass(stage.etat)">
+                    {{ getStatusText(stage.etat) }}
+                  </span>
+                </div>
+                <div class="stage-meta">
+                  <span class="stage-id">#{{ stage.id }}</span>
+                </div>
+              </div>
+
+              <div class="stage-body">
+                <div class="stage-info">
+                  <div class="info-item">
+                    <i class="bi bi-building"></i>
+                    <div class="info-content">
+                      <label>Entreprise</label>
+                      <span>{{ stage.entreprise }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <i class="bi bi-mortarboard"></i>
+                    <div class="info-content">
+                      <label>Filière</label>
+                      <span>{{ stage.filiere }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <i class="bi bi-calendar-range"></i>
+                    <div class="info-content">
+                      <label>Période</label>
+                      <span>{{ stage.dateDebut | date:'dd/MM/yyyy' }} - {{ stage.dateFin | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="stage.note" class="stage-note">
+                  <i class="bi bi-chat-left-text"></i>
+                  <div class="note-content">
+                    <label>Note de l'encadrant</label>
+                    <p>{{ stage.note }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="stage-actions">
+                <div class="action-group">
+                  <button 
+                    class="btn btn-outline-primary btn-sm" 
+                    (click)="downloadConvention(stage.id)"
+                    [disabled]="stage.etat === 'EN_ATTENTE' || stage.etat === 'REJETE'"
+                    title="Télécharger la convention">
+                    <i class="bi bi-download"></i>
+                    Convention
+                  </button>
+                  
+                  <button 
+                    class="btn btn-outline-secondary btn-sm" 
+                    (click)="downloadAssurance(stage.id)"
+                    [disabled]="stage.etat === 'EN_ATTENTE' || stage.etat === 'REJETE'"
+                    title="Télécharger l'assurance">
+                    <i class="bi bi-shield-check"></i>
+                    Assurance
+                  </button>
+                </div>
+                
+                <button 
+                  class="btn btn-success btn-sm" 
+                  (click)="uploadReport(stage.id)"
+                  [disabled]="stage.etat !== 'APPROUVE' && stage.etat !== 'EN_COURS'"
+                  title="Soumettre le rapport">
+                  <i class="bi bi-upload"></i>
+                  Rapport
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div class="summary-card">
+  <div class="summary-content">
+    <div class="summary-value">{{ countEnAttente }}</div>
+    <div class="summary-label">En attente</div>
+  </div>
+</div>
+
+<div class="summary-card">
+  <div class="summary-content">
+    <div class="summary-value">{{ countApprouve }}</div>
+    <div class="summary-label">Approuvés</div>
+  </div>
+</div>
+
+<!-- etc… -->
+
+
+        <div class="summary-card">
+          <div class="summary-icon danger">
+            <i class="bi bi-x-circle"></i>
+          </div>
+          <div class="summary-content">
+            <div class="summary-value">{{ countRejete }}</div>
+            <div class="summary-label">Rejetés</div>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-icon info">
+            <i class="bi bi-briefcase"></i>
+          </div>
+          <div class="summary-content">
+            <div class="summary-value">{{ countEncours}}</div>
+            <div class="summary-label">En cours</div>
+          </div>
+        </div>
+      </div>
+    </div>

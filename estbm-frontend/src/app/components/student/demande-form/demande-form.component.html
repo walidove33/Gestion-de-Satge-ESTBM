@@ -1,1 +1,274 @@
-<p>demande-form works!</p>
+<app-navbar></app-navbar>
+
+<div class="form-layout">
+  <div class="form-container">
+    <!-- Header -->
+    <div class="form-header">
+      <div class="header-icon">
+        <i class="bi bi-plus-circle"></i>
+      </div>
+      <h1>Nouvelle demande de stage</h1>
+      <p>Remplissez le formulaire ci-dessous pour soumettre votre demande de stage</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card form-card">
+      <form (ngSubmit)="onSubmit()" #stageForm="ngForm">
+        <div class="card-body">
+          <!-- Basic Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3>
+                <i class="bi bi-info-circle me-2"></i>
+                Informations générales
+              </h3>
+              <p>Détails de base sur votre stage</p>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="entreprise" class="form-label">
+                  <i class="bi bi-building me-2"></i>
+                  Entreprise *
+                </label>
+                <input 
+                  type="text" 
+                  id="entreprise" 
+                  name="entreprise"
+                  class="form-control"
+                  [(ngModel)]="stageData.entreprise"
+                  required
+                  #entreprise="ngModel"
+                  placeholder="Nom de l'entreprise d'accueil"
+                  [class.is-invalid]="entreprise.invalid && entreprise.touched">
+                <div *ngIf="entreprise.invalid && entreprise.touched" class="invalid-feedback">
+                  Le nom de l'entreprise est requis
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="filiere" class="form-label">
+                  <i class="bi bi-mortarboard me-2"></i>
+                  Filière *
+                </label>
+                <select 
+                  id="filiere" 
+                  name="filiere"
+                  class="form-control"
+                  [(ngModel)]="stageData.filiere"
+                  required
+                  #filiere="ngModel"
+                  [class.is-invalid]="filiere.invalid && filiere.touched">
+                  <option value="">Sélectionnez votre filière</option>
+                  <option value="Génie Informatique">Génie Informatique</option>
+                  <option value="Génie Électrique">Génie Électrique</option>
+                  <option value="Génie Mécanique">Génie Mécanique</option>
+                  <option value="Génie Civil">Génie Civil</option>
+                  <option value="Génie Industriel">Génie Industriel</option>
+                  <option value="Génie Chimique">Génie Chimique</option>
+                  <option value="Génie des Procédés">Génie des Procédés</option>
+                  <option value="Techniques de Management">Techniques de Management</option>
+                </select>
+                <div *ngIf="filiere.invalid && filiere.touched" class="invalid-feedback">
+                  Veuillez sélectionner votre filière
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="sujet" class="form-label">
+                <i class="bi bi-journal-text me-2"></i>
+                Sujet du stage *
+              </label>
+              <textarea 
+                id="sujet" 
+                name="sujet"
+                class="form-control"
+                [(ngModel)]="stageData.sujet"
+                required
+                #sujet="ngModel"
+                rows="4"
+                placeholder="Décrivez le sujet et les objectifs de votre stage..."
+                [class.is-invalid]="sujet.invalid && sujet.touched"></textarea>
+              <div *ngIf="sujet.invalid && sujet.touched" class="invalid-feedback">
+                Le sujet du stage est requis
+              </div>
+              <small class="form-text">
+                Décrivez clairement les missions et objectifs de votre stage
+              </small>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="dateDebut" class="form-label">
+                  <i class="bi bi-calendar-event me-2"></i>
+                  Date de début *
+                </label>
+                <input 
+                  type="date" 
+                  id="dateDebut" 
+                  name="dateDebut"
+                  class="form-control"
+                  [(ngModel)]="stageData.dateDebut"
+                  required
+                  #dateDebut="ngModel"
+                  [min]="getMinDate()"
+                  [class.is-invalid]="dateDebut.invalid && dateDebut.touched">
+                <div *ngIf="dateDebut.invalid && dateDebut.touched" class="invalid-feedback">
+                  La date de début est requise
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="dateFin" class="form-label">
+                  <i class="bi bi-calendar-check me-2"></i>
+                  Date de fin *
+                </label>
+                <input 
+                  type="date" 
+                  id="dateFin" 
+                  name="dateFin"
+                  class="form-control"
+                  [(ngModel)]="stageData.dateFin"
+                  required
+                  #dateFin="ngModel"
+                  [min]="stageData.dateDebut"
+                  [class.is-invalid]="dateFin.invalid && dateFin.touched">
+                <div *ngIf="dateFin.invalid && dateFin.touched" class="invalid-feedback">
+                  La date de fin est requise
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Documents Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3>
+                <i class="bi bi-file-earmark-arrow-up me-2"></i>
+                Documents (optionnels)
+              </h3>
+              <p>Joignez vos documents si vous les avez déjà</p>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="bi bi-shield-check me-2"></i>
+                  Attestation d'assurance
+                </label>
+                <div class="file-upload-area" 
+                     [class.has-file]="selectedFiles.assurance"
+                     (click)="triggerFileInput('assurance')">
+                  <input #assuranceInput 
+                         id="assuranceInput"
+                         type="file" 
+                         accept=".pdf,.jpg,.jpeg,.png"
+                         (change)="onFileSelect($event, 'assurance')"
+                         hidden>
+                  <div *ngIf="!selectedFiles.assurance" class="upload-placeholder">
+                    <i class="bi bi-cloud-upload"></i>
+                    <p>Cliquez pour sélectionner</p>
+                    <small>PDF, JPG, PNG - Max 5MB</small>
+                  </div>
+                  <div *ngIf="selectedFiles.assurance" class="file-selected">
+                    <i class="bi bi-file-earmark-check"></i>
+                    <div class="file-info">
+                      <span class="file-name">{{ selectedFiles.assurance.name }}</span>
+                      <small class="file-size">{{ (selectedFiles.assurance.size / 1024 / 1024).toFixed(2) }} MB</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeFile('assurance', $event)">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="bi bi-file-earmark-text me-2"></i>
+                  Convention de stage
+                </label>
+                <div class="file-upload-area" 
+                     [class.has-file]="selectedFiles.convention"
+                     (click)="triggerFileInput('convention')">
+                  <input #conventionInput 
+                         id="conventionInput"
+                         type="file" 
+                         accept=".pdf,.doc,.docx"
+                         (change)="onFileSelect($event, 'convention')"
+                         hidden>
+                  <div *ngIf="!selectedFiles.convention" class="upload-placeholder">
+                    <i class="bi bi-cloud-upload"></i>
+                    <p>Cliquez pour sélectionner</p>
+                    <small>PDF, DOC, DOCX - Max 5MB</small>
+                  </div>
+                  <div *ngIf="selectedFiles.convention" class="file-selected">
+                    <i class="bi bi-file-earmark-check"></i>
+                    <div class="file-info">
+                      <span class="file-name">{{ selectedFiles.convention.name }}</span>
+                      <small class="file-size">{{ (selectedFiles.convention.size / 1024 / 1024).toFixed(2) }} MB</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeFile('convention', $event)">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-box">
+              <i class="bi bi-info-circle"></i>
+              <div class="info-content">
+                <h5>Information importante</h5>
+                <p>Ces documents peuvent être ajoutés plus tard. Vous pouvez soumettre votre demande sans eux et les fournir après approbation.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="card-footer">
+          <div class="form-actions">
+            <button type="button" 
+                    routerLink="/student/dashboard" 
+                    class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i>
+              Annuler
+            </button>
+            <button type="submit" 
+                    class="btn btn-primary" 
+                    [disabled]="stageForm.invalid || loading">
+              <span *ngIf="loading" class="spinner"></span>
+              <i *ngIf="!loading" class="bi bi-send"></i>
+              {{ loading ? 'Envoi en cours...' : 'Soumettre la demande' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Help Section -->
+    <div class="help-section">
+      <div class="help-card">
+        <div class="help-icon">
+          <i class="bi bi-question-circle"></i>
+        </div>
+        <div class="help-content">
+          <h4>Besoin d'aide ?</h4>
+          <p>Consultez notre guide ou contactez le service des stages pour toute question.</p>
+          <div class="help-actions">
+            <a href="#" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-book"></i>
+              Guide étudiant
+            </a>
+            <a href="#" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-envelope"></i>
+              Contact
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,36 @@
+// Color palette from https://estbm.ac.ma/new/
+
+
+$color-primary:   #005eb8;
+$color-secondary: #ffc20e;
+$color-success:   #28a745;
+$color-danger:    #dc3545;
+$color-warning:   #ffc107;
+$color-info:      #17a2b8;
+$color-light:     #f8f9fa;
+$color-dark:      #343a40;
+
+$font-family-base: 'Roboto', sans-serif;
+$border-radius:    0.5rem;
+$transition-fast:  0.2s ease-in-out;
+
+body {
+  font-family: $font-family-base;
+  background-color: $color-light;
+  color: $color-dark;
+}
+
+.navbar {
+  background-color: $color-primary;
+  padding: 1rem 2rem;
+  .navbar-brand {
+    img { max-height: 3rem; }
+  }
+  .nav-link {
+    color: $color-light;
+    font-weight: 500;
+    margin-left: 1rem;
+    &:hover { color: $color-secondary; }
+  }
+}
+

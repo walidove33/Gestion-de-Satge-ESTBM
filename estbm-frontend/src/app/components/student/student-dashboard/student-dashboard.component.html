@@ -1,1 +1,276 @@
-<p>student-dashboard works!</p>
+<app-navbar></app-navbar>
+
+<div class="dashboard-layout">
+  <div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <div class="header-text">
+          <h1>Tableau de bord étudiant</h1>
+          <p>Gérez vos demandes de stage et suivez votre progression</p>
+        </div>
+        <div class="header-date">
+          <i class="bi bi-calendar3"></i>
+          <span>{{ currentDate | date:'EEEE d MMMM yyyy':'fr' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card stat-primary">
+        <div class="stat-icon">
+          <i class="bi bi-file-earmark-plus"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getTotalStages() }}</div>
+          <div class="stat-label">Demandes totales</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-warning">
+        <div class="stat-icon">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getStagesByStatus('EN_ATTENTE').length }}</div>
+          <div class="stat-label">En attente</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-success">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getStagesByStatus('APPROUVE').length }}</div>
+          <div class="stat-label">Approuvés</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-info">
+        <div class="stat-icon">
+          <i class="bi bi-briefcase"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getStagesByStatus('EN_COURS').length }}</div>
+          <div class="stat-label">En cours</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-grid">
+      <!-- Current Stage -->
+      <div class="content-section">
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <i class="bi bi-briefcase me-2"></i>
+              Stage actuel
+            </h3>
+            <button *ngIf="canRequestNewStage()" 
+                    routerLink="/student/new-stage" 
+                    class="btn btn-primary btn-sm">
+              <i class="bi bi-plus-circle"></i>
+              Nouvelle demande
+            </button>
+          </div>
+          <div class="card-body">
+            <div *ngIf="loading" class="loading-state">
+              <div class="spinner spinner-lg"></div>
+              <p>Chargement...</p>
+            </div>
+
+            <div *ngIf="!loading && getCurrentStage()" class="current-stage">
+              <div class="stage-header">
+                <h4>{{ getCurrentStage()?.sujet }}</h4>
+                <span class="badge" [ngClass]="getStatusBadgeClass(getCurrentStage()?.etat)">
+                  {{ getStatusText(getCurrentStage()?.etat) }}
+                </span>
+              </div>
+              <div class="stage-details">
+                <div class="detail-item">
+                  <i class="bi bi-building"></i>
+                  <span>{{ getCurrentStage()?.entreprise }}</span>
+                </div>
+                <div class="detail-item">
+                  <i class="bi bi-calendar-range"></i>
+                  <span>{{ getCurrentStage()?.dateDebut | date:'dd/MM/yyyy' }} - {{ getCurrentStage()?.dateFin | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="detail-item">
+                  <i class="bi bi-mortarboard"></i>
+                  <span>{{ getCurrentStage()?.filiere }}</span>
+                </div>
+              </div>
+              <div *ngIf="getCurrentStage()?.note" class="stage-note">
+                <i class="bi bi-chat-left-text"></i>
+                <span>{{ getCurrentStage()?.note }}</span>
+              </div>
+            </div>
+
+            <div *ngIf="!loading && !getCurrentStage()" class="empty-state">
+              <i class="bi bi-briefcase"></i>
+              <h4>Aucun stage en cours</h4>
+              <p>Vous n'avez pas de stage actuel. Créez une nouvelle demande pour commencer.</p>
+              <button routerLink="/student/new-stage" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
+                Créer une demande
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents -->
+      <div class="content-section">
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <i class="bi bi-file-earmark-pdf me-2"></i>
+              Documents
+            </h3>
+          </div>
+          <div class="card-body">
+            <div *ngIf="getCurrentStage()" class="documents-list">
+              <div class="document-item">
+                <div class="document-info">
+                  <i class="bi bi-file-earmark-pdf text-danger"></i>
+                  <div class="document-details">
+                    <span class="document-name">Convention de stage</span>
+                    <small class="document-description">Document officiel de convention</small>
+                  </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm"
+                        (click)="downloadConvention(getCurrentStage()!.id)"
+                        [disabled]="!canDownloadDocuments()">
+                  <i class="bi bi-download"></i>
+                  Télécharger
+                </button>
+              </div>
+
+              <div class="document-item">
+                <div class="document-info">
+                  <i class="bi bi-file-earmark-pdf text-success"></i>
+                  <div class="document-details">
+                    <span class="document-name">Attestation d'assurance</span>
+                    <small class="document-description">Couverture assurance stage</small>
+                  </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm"
+                        (click)="downloadAssurance(getCurrentStage()!.id)"
+                        [disabled]="!canDownloadDocuments()">
+                  <i class="bi bi-download"></i>
+                  Télécharger
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="!getCurrentStage()" class="empty-state">
+              <i class="bi bi-file-earmark-x"></i>
+              <h5>Aucun document disponible</h5>
+              <p>Les documents seront disponibles après approbation de votre stage</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Report -->
+      <div class="content-section full-width">
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <i class="bi bi-cloud-upload me-2"></i>
+              Soumettre un rapport
+            </h3>
+          </div>
+          <div class="card-body">
+            <div *ngIf="canSubmitReport()" class="submit-report">
+              <div class="submit-info">
+                <div class="info-icon">
+                  <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="info-text">
+                  <p><strong>Votre stage est approuvé.</strong></p>
+                  <p>Vous pouvez maintenant soumettre votre rapport de stage.</p>
+                </div>
+              </div>
+              
+              <div class="file-upload-area" (click)="triggerFileInput()" [class.has-file]="selectedFile">
+                <input #fileInput type="file" accept=".pdf,.doc,.docx" (change)="onFileSelected($event)" hidden>
+                <div *ngIf="!selectedFile" class="upload-placeholder">
+                  <i class="bi bi-cloud-upload"></i>
+                  <p>Cliquez pour sélectionner votre rapport</p>
+                  <small>PDF, DOC, DOCX - Max 10MB</small>
+                </div>
+                <div *ngIf="selectedFile" class="file-selected">
+                  <i class="bi bi-file-earmark-check"></i>
+                  <div class="file-info">
+                    <span class="file-name">{{ selectedFile.name }}</span>
+                    <small class="file-size">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</small>
+                  </div>
+                  <button class="btn btn-sm btn-outline-danger" (click)="removeSelectedFile(); $event.stopPropagation()">
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div *ngIf="selectedFile" class="submit-actions">
+                <button class="btn btn-success" 
+                        (click)="submitReport()"
+                        [disabled]="submittingReport">
+                  <span *ngIf="submittingReport" class="spinner"></span>
+                  <i *ngIf="!submittingReport" class="bi bi-upload"></i>
+                  {{ submittingReport ? 'Envoi en cours...' : 'Soumettre le rapport' }}
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="!canSubmitReport()" class="empty-state">
+              <i class="bi bi-file-earmark-x"></i>
+              <h5>Soumission non disponible</h5>
+              <p>La soumission de rapport n'est pas disponible pour le moment</p>
+              <small class="text-muted">Votre stage doit être approuvé pour pouvoir soumettre un rapport</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h3>Actions rapides</h3>
+      <div class="actions-grid">
+        <a routerLink="/student/stages" class="action-card">
+          <div class="action-icon">
+            <i class="bi bi-list-ul"></i>
+          </div>
+          <div class="action-content">
+            <h4>Voir tous mes stages</h4>
+            <p>Consultez l'historique complet de vos stages</p>
+          </div>
+        </a>
+
+        <a routerLink="/student/new-stage" class="action-card" *ngIf="canRequestNewStage()">
+          <div class="action-icon">
+            <i class="bi bi-plus-circle"></i>
+          </div>
+          <div class="action-content">
+            <h4>Nouvelle demande</h4>
+            <p>Créez une nouvelle demande de stage</p>
+          </div>
+        </a>
+
+        <div class="action-card disabled" *ngIf="!canRequestNewStage()">
+          <div class="action-icon">
+            <i class="bi bi-exclamation-circle"></i>
+          </div>
+          <div class="action-content">
+            <h4>Limite atteinte</h4>
+            <p>Une seule demande par année académique</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

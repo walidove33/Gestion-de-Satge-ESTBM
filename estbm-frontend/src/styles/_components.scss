@@ -1,0 +1,30 @@
+
+.btn {
+  border-radius: $border-radius;
+  transition: background-color $transition-fast;
+  &-primary {
+    background-color: $color-primary;
+    color: $color-light;
+    &:hover { background-color: darken($color-primary, 10%); }
+  }
+  &-secondary {
+    background-color: $color-secondary;
+    color: $color-dark;
+    &:hover { background-color: darken($color-secondary, 10%); }
+  }
+}
+
+.card {
+  border-radius: $border-radius;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  &-header {
+    background: $color-primary;
+    color: $color-light;
+    padding: .75rem 1rem;
+    font-weight: 600;
+    border-top-left-radius: $border-radius;
+    border-top-right-radius: $border-radius;
+  }
+  &-body { padding: 1rem; }
+}
