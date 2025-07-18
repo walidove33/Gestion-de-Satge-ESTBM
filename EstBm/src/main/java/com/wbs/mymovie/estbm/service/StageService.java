@@ -206,4 +206,37 @@ public class StageService {
     public List<Document> getDocumentsByStageId(Long stageId) {
         return documentRepository.findByStageId(stageId);
     }
+
+    public void ajouterDocuments(Long stageId,
+                                 List<MultipartFile> fichiers,
+                                 List<String> types) throws IOException {
+        Stage stage = stageRepository.findById(stageId)
+                .orElseThrow(() -> new RuntimeException("Stage non trouvé avec ID: " + stageId));
+
+        // Créer le dossier uploads/stages/{stageId}
+        Path uploadDir = Paths.get("uploads/stages/" + stageId);
+        if (!Files.exists(uploadDir)) {
+            Files.createDirectories(uploadDir);
+        }
+
+        // Boucle sur chaque fichier + son type
+        for (int i = 0; i < fichiers.size(); i++) {
+            MultipartFile fichier = fichiers.get(i);
+            String type    = types.get(i);
+
+            if (fichier == null || fichier.isEmpty()) continue;
+
+            String nomFichier = System.currentTimeMillis() + "_" + fichier.getOriginalFilename();
+            Path   cible      = uploadDir.resolve(nomFichier);
+            Files.copy(fichier.getInputStream(), cible, StandardCopyOption.REPLACE_EXISTING);
+
+            Document doc = new Document();
+            doc.setNom(fichier.getOriginalFilename());
+            doc.setType(type);
+            doc.setCheminFichier(cible.toString());
+            doc.setStage(stage);
+            // (optionnel) doc.setEtudiant(stage.getEtudiant());
+            documentRepository.save(doc);
+        }
+    }
 }

@@ -1,25 +1,22 @@
-import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
+import { Injectable } from '@angular/core';
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  
-  // Skip auth for login and register endpoints
-  if (req.url.includes('/login') || req.url.includes('/register')) {
-    return next(req);
-  }
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  const token = localStorage.getItem('token');
+  console.log('Interceptor token:', token);
 
-  const token = authService.getToken();
   if (token) {
     const authReq = req.clone({
-      setHeaders: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': req.headers.get('Content-Type') || 'application/json'
-      }
+      headers: req.headers.set('Authorization', `Bearer ${token}`)
     });
-    return next(authReq);
+    console.log('Interceptor headers:', authReq.headers);
+    return next.handle(authReq);
   }
 
-  return next(req);
-};
+  return next.handle(req);
+}
+
+}

@@ -1,1 +1,205 @@
-<p>encadrant-management works!</p>
+<div class="container mt-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people me-2"></i>Gestion des Encadrants</h2>
+    <a routerLink="/admin/dashboard" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i>Retour
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Formulaire de création -->
+    <div class="col-md-5">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <i class="bi bi-person-plus me-2"></i>Créer un Encadrant
+        </div>
+        <div class="card-body">
+          <div *ngIf="successMessage" class="alert alert-success">
+            {{ successMessage }}
+          </div>
+          <div *ngIf="errorMessage" class="alert alert-danger">
+            {{ errorMessage }}
+          </div>
+
+          <form #encadrantForm="ngForm" (ngSubmit)="createEncadrant()">
+            <!-- Nom -->
+            <div class="mb-3">
+              <label for="nom" class="form-label">
+                <i class="bi bi-person me-1"></i>Nom *
+              </label>
+              <input
+                id="nom" name="nom"
+                class="form-control"
+                [(ngModel)]="newEncadrant.nom"
+                required
+                #nom="ngModel"
+              >
+              <div *ngIf="nom.invalid && nom.touched" class="text-danger small">
+                Nom requis
+              </div>
+            </div>
+
+            <!-- Prénom -->
+            <div class="mb-3">
+              <label for="prenom" class="form-label">
+                <i class="bi bi-person me-1"></i>Prénom *
+              </label>
+              <input
+                id="prenom" name="prenom"
+                class="form-control"
+                [(ngModel)]="newEncadrant.prenom"
+                required
+                #prenom="ngModel"
+              >
+              <div *ngIf="prenom.invalid && prenom.touched" class="text-danger small">
+                Prénom requis
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+              <label for="email" class="form-label">
+                <i class="bi bi-envelope me-1"></i>Email *
+              </label>
+              <input
+                id="email" name="email" type="email"
+                class="form-control"
+                [(ngModel)]="newEncadrant.email"
+                required
+                #email="ngModel"
+              >
+              <div *ngIf="email.invalid && email.touched" class="text-danger small">
+                Email valide requis
+              </div>
+            </div>
+
+            <!-- Téléphone -->
+            <div class="mb-3">
+              <label for="telephone" class="form-label">
+                <i class="bi bi-telephone me-1"></i>Téléphone *
+              </label>
+              <input
+                id="telephone" name="telephone"
+                class="form-control"
+                [(ngModel)]="newEncadrant.telephone"
+                required
+                #telephone="ngModel"
+              >
+              <div *ngIf="telephone.invalid && telephone.touched" class="text-danger small">
+                Téléphone requis
+              </div>
+            </div>
+
+            <!-- Spécialité -->
+            <div class="mb-3">
+              <label for="specialite" class="form-label">
+                <i class="bi bi-mortarboard me-1"></i>Spécialité *
+              </label>
+              <select
+                id="specialite" name="specialite"
+                class="form-select"
+                [(ngModel)]="newEncadrant.specialite"
+                required
+                #specialite="ngModel"
+              >
+                <option value="">Sélectionnez</option>
+                <option value="Génie Informatique">Génie Informatique</option>
+                <option value="Génie Électrique">Génie Électrique</option>
+                <option value="Génie Mécanique">Génie Mécanique</option>
+                <option value="Génie Civil">Génie Civil</option>
+                <option value="Génie Industriel">Génie Industriel</option>
+                <option value="Génie Chimique">Génie Chimique</option>
+              </select>
+              <div *ngIf="specialite.invalid && specialite.touched" class="text-danger small">
+                Spécialité requise
+              </div>
+            </div>
+
+            <!-- Mot de passe -->
+            <div class="mb-3">
+              <label for="password" class="form-label">
+                <i class="bi bi-lock me-1"></i>Mot de passe *
+              </label>
+              <input
+                id="password" name="password"
+                type="password"
+                class="form-control"
+                [(ngModel)]="newEncadrant.password"
+                required minlength="6"
+                #password="ngModel"
+              >
+              <div *ngIf="password.invalid && password.touched" class="text-danger small">
+                <div *ngIf="password.errors?.['required']">Requis</div>
+                <div *ngIf="password.errors?.['minlength']">≥ 6 caractères</div>
+              </div>
+            </div>
+
+            <!-- Bouton Création -->
+            <button
+              type="submit"
+              class="btn btn-primary w-100"
+              [disabled]="encadrantForm.invalid || loading"
+            >
+              <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+              Créer
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des encadrants -->
+    <div class="col-md-7">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-list me-2"></i>Liste des Encadrants
+        </div>
+        <div class="card-body">
+          <!-- Loading -->
+          <div *ngIf="loadingList" class="text-center py-4">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Chargement…</p>
+          </div>
+
+          <!-- Aucune donnée -->
+          <div *ngIf="!loadingList && encadrants.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-people fs-1"></i>
+            <p>Aucun encadrant trouvé</p>
+          </div>
+
+          <!-- Tableau -->
+          <div *ngIf="!loadingList && encadrants.length > 0" class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Nom complet</th>
+                  <th>Email</th>
+                  <th>Téléphone</th>
+                  <th>Spécialité</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let e of encadrants">
+                  <td>{{ e.nom }} {{ e.prenom }}</td>
+                  <td>{{ e.email }}</td>
+                  <td>{{ e.telephone }}</td>
+                  <td><span class="badge bg-info">{{ e.specialite }}</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" (click)="editEncadrant(e)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteEncadrant(e.id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

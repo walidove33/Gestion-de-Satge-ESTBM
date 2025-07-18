@@ -7,9 +7,11 @@ import com.wbs.mymovie.estbm.service.StageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -19,10 +21,7 @@ public class StageController {
     @Autowired
     private StageService stageService;
 
-    @PostMapping("/")
-    public ResponseEntity<Stage> createStage(@RequestBody DemandeStageDto stageDto) {
-        return ResponseEntity.ok(stageService.creerDemande(stageDto));
-    }
+
 
     @GetMapping("/etudiant/{id}")
     public List<Stage> getStagesByEtudiant(@PathVariable Long id) {
@@ -34,10 +33,13 @@ public class StageController {
         return stageService.getStagesParEncadrant(id);
     }
 
+    @PreAuthorize("hasRole('ETUDIANT')") // ou similaire
     @PostMapping("/demande")
     public ResponseEntity<Stage> creerDemande(@RequestBody DemandeStageDto dto) {
         return ResponseEntity.ok(stageService.creerDemande(dto));
     }
+
+
 
     @GetMapping("/etat")
     public ResponseEntity<String> suivreEtat(@RequestParam Long idEtudiant) {
@@ -61,11 +63,14 @@ public class StageController {
         return ResponseEntity.ok(stageService.getDocumentsByStageId(stageId));
     }
 
-    @PostMapping("/{stageId}/documents")
-    public ResponseEntity<?> uploadDocumentPourStage(
-            @PathVariable Long stageId,
-            @RequestParam String type,
-            @RequestParam MultipartFile file) {
-        return stageService.attribuerDocument(stageId, file, type);
+    @PutMapping("/{id}/documents")
+    public ResponseEntity<String> ajouterDocuments(
+            @PathVariable("id") Long stageId,
+            @RequestPart("files") List<MultipartFile> files,
+            @RequestPart("types") List<String> types
+    ) throws IOException {
+        stageService.ajouterDocuments(stageId, files, types);
+        return ResponseEntity.ok("Documents ajoutés");
     }
+
 }

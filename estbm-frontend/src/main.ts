@@ -4,8 +4,12 @@ import { RouterModule, RouterOutlet } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app/app.routes';
-import { authInterceptor } from './app/interceptors/auth.interceptor';
+import { AuthInterceptor } from './app/interceptors/auth.interceptor';
 import { ToastComponent } from './app/shared/components/toast/toast.component';
+import { errorInterceptor } from './app/interceptors/error.interceptor';
+import { provideAnimations } from '@angular/platform-browser/animations';
+
+
 
 @Component({
   selector: 'app-root',
@@ -20,9 +24,18 @@ export class App {
   title = 'Gestion des Stages - EST';
 }
 
+
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+
 bootstrapApplication(App, {
   providers: [
-    provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor]))
-  ]
-}).catch(err => console.error(err));
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    },
+    provideHttpClient(),
+    provideRouter(routes)  ]
+});
+
+

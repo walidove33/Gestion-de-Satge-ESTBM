@@ -33,6 +33,7 @@ import com.wbs.mymovie.estbm.util.JwtRequestFilter;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -66,6 +67,8 @@ public class SecurityConfig {
                         .requestMatchers("/stages/documents/etudiant/**").hasRole("ETUDIANT")
                         .requestMatchers("/stages/documents/etudiant/**").hasRole("ETUDIANT") // Nouveau
                         .requestMatchers("/stages/documents/admin/**").hasRole("ADMIN") // Nouveau
+                        .requestMatchers("/stages/stages/**").authenticated()// Nouveau
+
                         .anyRequest().authenticated()
                 )
                 // 4) gestion des erreurs (401)
@@ -109,14 +112,14 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        config.setAllowCredentials(true);
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 

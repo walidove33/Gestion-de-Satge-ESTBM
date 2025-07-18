@@ -29,6 +29,16 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        String email = authentication.getName();
+        Utilisateur user = utilisateurService.findByEmail(email);
+        return ResponseEntity.ok(user);
+    }
+
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
@@ -40,7 +50,10 @@ public class AuthController {
             String token = jwtUtil.generateToken(loginRequest.getEmail());
 
             Utilisateur user = utilisateurService.findByEmail(loginRequest.getEmail());
-            return ResponseEntity.ok(new JwtResponse(token, user.getRole().name()));
+            return ResponseEntity.ok(new JwtResponse(token, user.getRole().name(), user));
+
+
+
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email ou mot de passe invalide");
@@ -83,22 +96,22 @@ public class AuthController {
     }
 
 
-    static class JwtResponse {
-        private String token;
-        private String role;
-
-        public JwtResponse(String token, String role) {
-            this.token = token;
-            this.role = role;
-        }
-
-        public String getToken() {
-            return token;
-        }
-
-        public String getRole() {
-            return role;
-        }
-    }
+//    static class JwtResponse {
+//        private String token;
+//        private String role;
+//
+//        public JwtResponse(String token, String role) {
+//            this.token = token;
+//            this.role = role;
+//        }
+//
+//        public String getToken() {
+//            return token;
+//        }
+//
+//        public String getRole() {
+//            return role;
+//        }
+//    }
 
 }

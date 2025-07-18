@@ -95,12 +95,16 @@ package com.wbs.mymovie.estbm.controller;
 
 import com.wbs.mymovie.estbm.dto.AssignmentDto;
 import com.wbs.mymovie.estbm.dto.RegisterRequest;
+import com.wbs.mymovie.estbm.model.Stage;
 import com.wbs.mymovie.estbm.service.StageService;
 import com.wbs.mymovie.estbm.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
 
 
 @RestController
@@ -157,5 +161,16 @@ public class AdminController {
     public ResponseEntity<?> attribuerAssurance(@RequestParam Long idStage,
                                                 @RequestParam("file") MultipartFile file) {
         return stageService.attribuerDocument(idStage, file, "Assurance");
+    }
+
+    @PutMapping("/{id}/documents")
+    public ResponseEntity<String> ajouterDocuments(
+            @PathVariable("id") Long stageId,
+            @RequestPart("files") List<MultipartFile> files,
+            @RequestPart("types") List<String> types
+    ) throws IOException {
+        // files.size()==types.size()==2
+        stageService.ajouterDocuments(stageId, files, types);
+        return ResponseEntity.ok("Documents ajoutés avec succès");
     }
 }

@@ -1,15 +1,24 @@
+// src/app/components/student/stage-list/stage-list.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
 import { StageService } from '../../../services/stage.service';
 import { ToastService } from '../../../services/toast.service';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
+
 import { Stage } from '../../../models/stage.model';
 
 @Component({
   selector: 'app-stage-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, NavbarComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    NavbarComponent
+  ],
   templateUrl: './stage-list.component.html',
   styleUrls: ['./stage-list.component.css']
 })
@@ -19,6 +28,12 @@ export class StageListComponent implements OnInit {
   loading = false;
   searchTerm = '';
   statusFilter = '';
+
+  // Totaux par statut
+  totalEnAttente = 0;
+  totalApprouve  = 0;
+  totalRejete    = 0;
+  totalEnCours   = 0;
 
   constructor(
     private stageService: StageService,
@@ -34,74 +49,69 @@ export class StageListComponent implements OnInit {
     this.stageService.getMyStages().subscribe({
       next: (stages) => {
         this.stages = stages;
-        this.filteredStages = [...stages];
+        this.filterStages();
         this.loading = false;
       },
-      error: (error) => {
+      error: (err) => {
         this.loading = false;
         this.toastService.error('Erreur lors du chargement des stages');
-        console.error('Error loading stages:', error);
+        console.error('Error loading stages:', err);
       }
     });
   }
 
   filterStages(): void {
     this.filteredStages = this.stages.filter(stage => {
-      const matchesSearch = !this.searchTerm || 
-        stage.sujet.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        stage.entreprise.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
-      const matchesStatus = !this.statusFilter || stage.etat === this.statusFilter;
-      
+      const matchesSearch = !this.searchTerm
+        || stage.sujet.toLowerCase().includes(this.searchTerm.toLowerCase())
+        || stage.entreprise.toLowerCase().includes(this.searchTerm.toLowerCase());
+
+      const matchesStatus = !this.statusFilter
+        || stage.etat === this.statusFilter;
+
       return matchesSearch && matchesStatus;
     });
+
+    // Mise à jour des compteurs
+    this.totalEnAttente = this.stages.filter(s => s.etat === 'EN_ATTENTE').length;
+    this.totalApprouve  = this.stages.filter(s => s.etat === 'APPROUVE').length;
+    this.totalRejete    = this.stages.filter(s => s.etat === 'REJETE').length;
+    this.totalEnCours   = this.stages.filter(s => s.etat === 'EN_COURS').length;
   }
 
   getStatusClass(etat: string): string {
-    const classMap: { [key: string]: string } = {
+    const map: Record<string,string> = {
       'EN_ATTENTE': 'badge-warning',
-      'APPROUVE': 'badge-success',
-      'REJETE': 'badge-danger',
-      'EN_COURS': 'badge-primary',
-      'TERMINE': 'badge-primary'
+      'APPROUVE':   'badge-success',
+      'REJETE':     'badge-danger',
+      'EN_COURS':   'badge-primary',
+      'TERMINE':    'badge-secondary'
     };
-    return classMap[etat] || 'badge-primary';
+    return map[etat] || 'badge-secondary';
   }
 
   getStatusText(etat: string): string {
-    const statusMap: { [key: string]: string } = {
+    const map: Record<string,string> = {
       'EN_ATTENTE': 'En attente',
-      'APPROUVE': 'Approuvé',
-      'REJETE': 'Rejeté',
-      'EN_COURS': 'En cours',
-      'TERMINE': 'Terminé'
+      'APPROUVE':   'Approuvé',
+      'REJETE':     'Rejeté',
+      'EN_COURS':   'En cours',
+      'TERMINE':    'Terminé'
     };
-    return statusMap[etat] || etat;
+    return map[etat] || etat;
   }
 
   downloadConvention(stageId: number): void {
     this.stageService.downloadConvention(stageId).subscribe({
-      next: (blob) => {
-        this.downloadFile(blob, `convention_stage_${stageId}.pdf`);
-        this.toastService.success('Convention téléchargée avec succès');
-      },
-      error: (error) => {
-        this.toastService.error('Erreur lors du téléchargement de la convention');
-        console.error('Error downloading convention:', error);
-      }
+      next: blob => this.downloadFile(blob, `convention_${stageId}.pdf`),
+      error: err => this.toastService.error('Erreur téléchargement convention')
     });
   }
 
   downloadAssurance(stageId: number): void {
     this.stageService.downloadAssurance(stageId).subscribe({
-      next: (blob) => {
-        this.downloadFile(blob, `assurance_stage_${stageId}.pdf`);
-        this.toastService.success('Attestation téléchargée avec succès');
-      },
-      error: (error) => {
-        this.toastService.error('Erreur lors du téléchargement de l\'attestation');
-        console.error('Error downloading assurance:', error);
-      }
+      next: blob => this.downloadFile(blob, `assurance_${stageId}.pdf`),
+      error: err => this.toastService.error('Erreur téléchargement assurance')
     });
   }
 
@@ -109,45 +119,37 @@ export class StageListComponent implements OnInit {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.pdf,.doc,.docx';
-    input.onchange = (event: any) => {
-      const file = event.target.files[0];
-      if (file) {
-        // Validate file size (10MB max)
-        if (file.size > 10 * 1024 * 1024) {
-          this.toastService.error('Le fichier ne doit pas dépasser 10MB');
-          return;
-        }
+    input.onchange = (e: any) => {
+      const file: File = e.target.files[0];
+      if (!file) return;
 
-        // Validate file type
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        if (!allowedTypes.includes(file.type)) {
-          this.toastService.error('Format de fichier non supporté. Utilisez PDF, DOC ou DOCX');
-          return;
-        }
-
-        this.stageService.submitRapport(stageId, file).subscribe({
-          next: (rapport) => {
-            this.toastService.success('Rapport soumis avec succès!');
-            this.loadStages(); // Refresh the list
-          },
-          error: (error) => {
-            this.toastService.error('Erreur lors de l\'envoi du rapport');
-            console.error('Error submitting report:', error);
-          }
-        });
+      if (file.size > 10 * 1024 * 1024) {
+        return this.toastService.error('Fichier > 10 MB');
       }
+      const types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!types.includes(file.type)) {
+        return this.toastService.error('Format non supporté');
+      }
+
+      this.stageService.submitRapport(stageId, file).subscribe({
+        next: () => {
+          this.toastService.success('Rapport soumis');
+          this.loadStages();
+        },
+        error: () => this.toastService.error('Erreur soumission rapport')
+      });
     };
     input.click();
   }
 
   private downloadFile(blob: Blob, filename: string): void {
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const a   = document.createElement('a');
+    a.href   = url;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    a.remove();
     window.URL.revokeObjectURL(url);
   }
 }
