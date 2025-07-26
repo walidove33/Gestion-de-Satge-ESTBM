@@ -1,5 +1,6 @@
 package com.wbs.mymovie.estbm.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wbs.mymovie.estbm.model.enums.EtatStage;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"etudiant", "encadrant", "documents"})
 public class Stage {
 
     @Id
@@ -45,8 +47,10 @@ public class Stage {
 
     private String filiere; // filière de l'étudiant
 
-    @OneToOne(mappedBy = "stage")
+    @OneToOne(mappedBy = "stage", fetch = FetchType.LAZY)
     private Rapport rapport;
+
+
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation;

@@ -79,7 +79,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
@@ -89,34 +88,53 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
+        logger.info(">>> Authorization header = " + authHeader);
+
         String token = null;
         String username = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            username = jwtUtil.getUsernameFromJwt(token);
+            logger.info(">>> Raw token = " + token);
+
+            boolean valid = jwtUtil.validateJwtToken(token);
+            logger.info(">>> validateJwtToken(token) = " + valid);
+
+            if (valid) {
+                username = jwtUtil.getUsernameFromJwt(token);
+                logger.info("✅ JWT valide pour user = " + username);
+            } else {
+                logger.warn("❌ JWT invalide");
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            Claims claims = jwtUtil.extractAllClaims(token);
+            logger.info(">>> Claims = " + claims);
 
-            if (jwtUtil.validateJwtToken(token)) {
-                Claims claims = jwtUtil.extractAllClaims(token);
+            Object rolesObj = claims.get("authorities");
+            logger.info(">>> rolesObj = " + rolesObj);
 
-                List<String> roles = claims.get("authorities", List.class);
+            @SuppressWarnings("unchecked")
+            List<String> roles = ((List<?>) rolesObj).stream()
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+            logger.info(">>> roles (List<String>) = " + roles);
 
-                List<GrantedAuthority> authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+            List<GrantedAuthority> authorities = roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+            logger.info(">>> authorities = " + authorities);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
-
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+            logger.info(">>> SecurityContextHolder updated with authentication");
         }
 
         filterChain.doFilter(request, response);

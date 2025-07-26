@@ -96,8 +96,12 @@ package com.wbs.mymovie.estbm.controller;
 import com.wbs.mymovie.estbm.dto.AssignmentDto;
 import com.wbs.mymovie.estbm.dto.RegisterRequest;
 import com.wbs.mymovie.estbm.model.Stage;
+import com.wbs.mymovie.estbm.model.Utilisateur;
+import com.wbs.mymovie.estbm.model.enums.Role;
+import com.wbs.mymovie.estbm.repository.EtudiantRepository;
 import com.wbs.mymovie.estbm.service.StageService;
 import com.wbs.mymovie.estbm.service.UtilisateurService;
+import org.hibernate.sql.ast.tree.update.Assignment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -105,6 +109,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -115,6 +120,9 @@ public class AdminController {
     private UtilisateurService utilisateurService;
 
     @Autowired
+    private EtudiantRepository etudiantRepository;
+
+    @Autowired
     private StageService stageService;
 
     /** Créer un compte encadrant */
@@ -123,12 +131,23 @@ public class AdminController {
         return ResponseEntity.ok(utilisateurService.creerCompteEncadrant(req));
     }
 
-    /** Statistiques globales */
-    @GetMapping("/statistiques")
-    public ResponseEntity<?> getStats() {
-        return ResponseEntity.ok(stageService.getStatistiques());
+
+    @GetMapping("/assignments")
+    public ResponseEntity<List<AssignmentDto>> getAssignments() {
+        List<AssignmentDto> dtos = stageService.getAssignments();
+        return ResponseEntity.ok(dtos);
     }
 
+
+
+    // StageController.java
+    @GetMapping("/statistiques")
+    public ResponseEntity<Map<String, Object>> getStatistiques() {
+        Map<String, Object> stats = stageService.getStatistiques();
+        // Add totalEtudiants if needed
+        stats.put("totalEtudiants", etudiantRepository.count());
+        return ResponseEntity.ok(stats);
+    }
     /** Exporter les listes */
     @GetMapping("/export")
     public ResponseEntity<?> exporterListes(@RequestParam String format) {
@@ -173,4 +192,34 @@ public class AdminController {
         stageService.ajouterDocuments(stageId, files, types);
         return ResponseEntity.ok("Documents ajoutés avec succès");
     }
+
+
+    @GetMapping("/users")
+    public ResponseEntity<List<Utilisateur>> getAllUsers() {
+        return ResponseEntity.ok(utilisateurService.getAllUsers());
+    }
+
+    @GetMapping("/stages")
+    public ResponseEntity<List<Stage>> getAllStages() {
+        return ResponseEntity.ok(stageService.getAllStages());
+    }
+
+    @GetMapping("/users/role/{role}")
+    public ResponseEntity<List<Utilisateur>> getUsersByRole(
+            @PathVariable("role") String roleStr) {
+
+        Role role;
+        try {
+            role = Role.valueOf(roleStr);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(utilisateurService.getByRole(role));
+    }
+
+
+
+
+
+
 }

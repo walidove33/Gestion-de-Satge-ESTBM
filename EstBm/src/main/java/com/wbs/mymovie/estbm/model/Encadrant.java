@@ -1,11 +1,14 @@
 package com.wbs.mymovie.estbm.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Table(name = "encadrants")
@@ -13,6 +16,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"etudiants","utilisateur"})
 public class Encadrant {
 
     @Id
@@ -27,4 +31,9 @@ public class Encadrant {
     @OneToOne
     @JoinColumn(name = "utilisateur_id", referencedColumnName = "id")
     private Utilisateur utilisateur;
+
+
+    @OneToMany(mappedBy = "encadrant")
+    @JsonIgnoreProperties("encadrant") // Ajouter cette annotation
+    private List<Etudiant> etudiants;
 }

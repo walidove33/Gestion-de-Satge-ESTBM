@@ -2,12 +2,16 @@ package com.wbs.mymovie.estbm.controller;
 
 import com.wbs.mymovie.estbm.dto.DemandeStageDto;
 import com.wbs.mymovie.estbm.model.Document;
+import com.wbs.mymovie.estbm.model.Etudiant;
 import com.wbs.mymovie.estbm.model.Stage;
+import com.wbs.mymovie.estbm.repository.EtudiantRepository;
+import com.wbs.mymovie.estbm.repository.StageRepository;
 import com.wbs.mymovie.estbm.service.StageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,7 +23,16 @@ import java.util.List;
 public class StageController {
 
     @Autowired
+    private StageRepository stageRepository;
+
+    @Autowired
     private StageService stageService;
+
+    @Autowired
+    private EtudiantRepository etudiantRepository;
+
+
+    // Dans StageController.java
 
 
 
@@ -33,12 +46,17 @@ public class StageController {
         return stageService.getStagesParEncadrant(id);
     }
 
-    @PreAuthorize("hasRole('ETUDIANT')") // ou similaire
-    @PostMapping("/demande")
-    public ResponseEntity<Stage> creerDemande(@RequestBody DemandeStageDto dto) {
-        return ResponseEntity.ok(stageService.creerDemande(dto));
-    }
-
+//    @PreAuthorize("hasRole('ETUDIANT')")
+//    @PostMapping("/demande")
+//    public ResponseEntity<Stage> creerDemande(@RequestBody DemandeStageDto dto, Authentication authentication) {
+//        // Récupérer l'étudiant authentifié
+//        String email = authentication.getName();
+//        Etudiant etudiant = etudiantRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé"));
+//
+//        dto.setIdEtudiant(etudiant.getId());
+//        return ResponseEntity.ok(stageService.creerDemande(dto));
+//    }
 
 
     @GetMapping("/etat")
@@ -50,6 +68,7 @@ public class StageController {
     public ResponseEntity<Resource> telechargerConvention(@RequestParam Long idStage) {
         return stageService.genererEtTelechargerConvention(idStage);
     }
+
 
     @PostMapping("/rapport")
     public ResponseEntity<String> soumettreRapport(@RequestParam Long idStage,
@@ -63,6 +82,11 @@ public class StageController {
         return ResponseEntity.ok(stageService.getDocumentsByStageId(stageId));
     }
 
+
+
+
+
+    @PreAuthorize("hasRole('ETUDIANT')")
     @PutMapping("/{id}/documents")
     public ResponseEntity<String> ajouterDocuments(
             @PathVariable("id") Long stageId,

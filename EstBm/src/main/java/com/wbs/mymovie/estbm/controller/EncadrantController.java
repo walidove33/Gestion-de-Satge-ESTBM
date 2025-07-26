@@ -1,15 +1,33 @@
 package com.wbs.mymovie.estbm.controller;
 
+
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import com.nimbusds.jose.util.Resource;
+import com.wbs.mymovie.estbm.dto.RapportDto;
+
 import com.wbs.mymovie.estbm.dto.DecisionDto;
 import com.wbs.mymovie.estbm.dto.NoteDto;
+import com.wbs.mymovie.estbm.dto.StageDto;
+import com.wbs.mymovie.estbm.model.Encadrant;
+import com.wbs.mymovie.estbm.model.Rapport;
 import com.wbs.mymovie.estbm.model.Stage;
+import com.wbs.mymovie.estbm.repository.EncadrantRepository;
+import com.wbs.mymovie.estbm.repository.RapportRepository;
 import com.wbs.mymovie.estbm.service.EncadrantService;
 import com.wbs.mymovie.estbm.service.StageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/stages/encadrants")
@@ -20,6 +38,15 @@ public class EncadrantController {
 
     @Autowired
     private StageService stageService;
+
+    @Autowired
+    private EncadrantRepository encadrantRepository;
+
+    @Autowired
+    private RapportRepository rapportRepository;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     @GetMapping("/{id}/stages")
     public ResponseEntity<List<Stage>> getStagesByEncadrant(@PathVariable Long id) {
@@ -52,9 +79,19 @@ public class EncadrantController {
         return ResponseEntity.ok(stageService.listerDemandesPourEncadrant(filiere));
     }
 
+//    @PostMapping("/decision")
+//    public ResponseEntity<?> decisionDemande(@RequestBody DecisionDto dto) {
+//        return ResponseEntity.ok(stageService.approuverOuRefuser(dto));
+//    }
+
     @PostMapping("/decision")
     public ResponseEntity<?> decisionDemande(@RequestBody DecisionDto dto) {
-        return ResponseEntity.ok(stageService.approuverOuRefuser(dto));
+        String result = stageService.approuverOuRefuser(dto).toString();
+
+        // Renvoyer un objet JSON au lieu de texte brut
+        Map<String, String> response = new HashMap<>();
+        response.put("message", result);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/note")
@@ -63,5 +100,79 @@ public class EncadrantController {
     }
 
 
+
+//    @GetMapping("/me/rapports")
+//    public ResponseEntity<List<RapportDto>> getMyRapports(Authentication authentication) {
+//        String email = authentication.getName();
+//
+//        // Récupérer l'encadrant connecté
+//        Encadrant encadrant = encadrantRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+//
+//        // Récupérer les rapports associés à ses stages
+//        List<Rapport> rapports = rapportRepository.findByEncadrantId(encadrant.getId());
+//
+//        // Mapper vers des DTOs sans les données binaires
+//        List<RapportDto> dtoList = rapports.stream()
+//                .map(r -> new RapportDto(
+//                        r.getId(),
+//                        r.getNomFichier(),
+//                        r.getDateDepot() != null ? r.getDateDepot().toString() : null // éviter les NPE
+//                ))
+//                .toList();
+//
+//        return ResponseEntity.ok(dtoList);
+//    }
+
+
+
+    @GetMapping("/me/rapports")
+    public ResponseEntity<List<RapportDto>> getMyRapports(Authentication auth) {
+        // Récupérer l'encadrant connecté
+        Encadrant enc = encadrantRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+
+        // Appeler **uniquement** la projection DTO
+        List<RapportDto> dtos = rapportRepository.findDtoByEncadrantId(enc.getId());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+
+    @GetMapping("/me/demandes")
+    public ResponseEntity<List<Stage>> getMesDemandes(Authentication authentication) {
+        String email = authentication.getName();
+        Encadrant enc = encadrantRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+        List<Stage> demandes = stageService.getDemandesParEncadrant(enc.getId());
+        return ResponseEntity.ok(demandes);
+    }
+
+
+    @GetMapping("/{idStage}/url")
+    public ResponseEntity<String> getRapportUrl(@PathVariable Long idStage) {
+        String url = stageService.getRapportUrlByStage(idStage);
+        if (url == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(url);
+    }
+
+
+    @GetMapping("/me/stages")
+    public ResponseEntity<List<StageDto>> getMyStages(Authentication authentication) {
+        String email = authentication.getName();
+        Encadrant encadrant = encadrantRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+
+        List<StageDto> dtos = stageService.getStagesDtoParEncadrant(encadrant.getId());
+        return ResponseEntity.ok(dtos);
+    }
+
+
+
+
+
+    
 
 }

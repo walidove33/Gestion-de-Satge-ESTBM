@@ -1,3 +1,5 @@
+
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -7,525 +9,19 @@ import { ToastService } from '../../../services/toast.service';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { User } from '../../../models/user.model';
 import { Stage, Rapport } from '../../../models/stage.model';
+import { HttpParams } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { DecisionDto } from '../../../models/stage.model';
+
 
 @Component({
   selector: 'app-encadrant-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule, NavbarComponent],
-  template: `
-    <app-navbar></app-navbar>
-    
-    <div class="dashboard-layout">
-      <div class="dashboard-container">
-        <!-- Header -->
-        <div class="dashboard-header">
-          <div class="header-content">
-            <div>
-              <h1>Tableau de bord encadrant</h1>
-              <p>Gérez vos stages assignés et validez les rapports</p>
-            </div>
-            <div class="header-date">
-              {{ currentDate | date:'EEEE d MMMM yyyy':'fr' }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-          <div class="stat-card stat-primary">
-            <div class="stat-icon">
-              <i class="bi bi-briefcase"></i>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ getTotalStages() }}</div>
-              <div class="stat-label">Stages assignés</div>
-            </div>
-          </div>
-
-          <div class="stat-card stat-warning">
-            <div class="stat-icon">
-              <i class="bi bi-clock-history"></i>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ getStagesByStatus('EN_ATTENTE').length }}</div>
-              <div class="stat-label">En attente</div>
-            </div>
-          </div>
-
-          <div class="stat-card stat-success">
-            <div class="stat-icon">
-              <i class="bi bi-check-circle"></i>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ getStagesByStatus('APPROUVE').length }}</div>
-              <div class="stat-label">Approuvés</div>
-            </div>
-          </div>
-
-          <div class="stat-card stat-info">
-            <div class="stat-icon">
-              <i class="bi bi-file-earmark-text"></i>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ getTotalRapports() }}</div>
-              <div class="stat-label">Rapports reçus</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="content-grid">
-          <!-- Pending Requests -->
-          <div class="content-section">
-            <div class="card">
-              <div class="card-header">
-                <h3>Demandes en attente</h3>
-                <span class="badge badge-warning">{{ getStagesByStatus('EN_ATTENTE').length }}</span>
-              </div>
-              <div class="card-body">
-                <div *ngIf="loading" class="loading-state">
-                  <div class="spinner"></div>
-                  <p>Chargement...</p>
-                </div>
-
-                <div *ngIf="!loading && getStagesByStatus('EN_ATTENTE').length === 0" class="empty-state">
-                  <i class="bi bi-check-circle"></i>
-                  <h4>Aucune demande en attente</h4>
-                  <p>Toutes les demandes ont été traitées</p>
-                </div>
-
-                <div *ngIf="!loading && getStagesByStatus('EN_ATTENTE').length > 0" class="requests-list">
-                  <div *ngFor="let stage of getStagesByStatus('EN_ATTENTE')" class="request-item">
-                    <div class="request-info">
-                      <h5>{{ stage.sujet }}</h5>
-                      <div class="request-details">
-                        <span><i class="bi bi-building"></i> {{ stage.entreprise }}</span>
-                        <span><i class="bi bi-person"></i> Étudiant #{{ stage.etudiantId }}</span>
-                      </div>
-                      <div class="request-period">
-                        <i class="bi bi-calendar-range"></i>
-                        {{ stage.dateDebut | date:'dd/MM/yyyy' }} - {{ stage.dateFin | date:'dd/MM/yyyy' }}
-                      </div>
-                    </div>
-                    <div class="request-actions">
-                      <button class="btn btn-sm btn-success" (click)="approveStage(stage.id)">
-                        <i class="bi bi-check"></i>
-                        Approuver
-                      </button>
-                      <button class="btn btn-sm btn-danger" (click)="rejectStage(stage.id)">
-                        <i class="bi bi-x"></i>
-                        Rejeter
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Validation Stats Chart -->
-          <div class="content-section">
-            <div class="card">
-              <div class="card-header">
-                <h3>Statistiques de validation</h3>
-              </div>
-              <div class="card-body">
-                <div class="stats-chart">
-                  <div class="chart-item">
-                    <div class="chart-bar">
-                      <div class="bar-fill bar-success" [style.height.%]="getValidationPercentage('APPROUVE')"></div>
-                    </div>
-                    <div class="chart-label">
-                      <span class="chart-value">{{ getStagesByStatus('APPROUVE').length }}</span>
-                      <span class="chart-text">Approuvés</span>
-                    </div>
-                  </div>
-                  
-                  <div class="chart-item">
-                    <div class="chart-bar">
-                      <div class="bar-fill bar-warning" [style.height.%]="getValidationPercentage('EN_ATTENTE')"></div>
-                    </div>
-                    <div class="chart-label">
-                      <span class="chart-value">{{ getStagesByStatus('EN_ATTENTE').length }}</span>
-                      <span class="chart-text">En attente</span>
-                    </div>
-                  </div>
-                  
-                  <div class="chart-item">
-                    <div class="chart-bar">
-                      <div class="bar-fill bar-danger" [style.height.%]="getValidationPercentage('REJETE')"></div>
-                    </div>
-                    <div class="chart-label">
-                      <span class="chart-value">{{ getStagesByStatus('REJETE').length }}</span>
-                      <span class="chart-text">Rejetés</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recent Reports -->
-          <div class="content-section full-width">
-            <div class="card">
-              <div class="card-header">
-                <h3>Rapports récents</h3>
-                <a routerLink="/encadrant/rapports" class="btn btn-sm btn-outline-primary">
-                  Voir tous les rapports
-                </a>
-              </div>
-              <div class="card-body">
-                <div *ngIf="loadingRapports" class="loading-state">
-                  <div class="spinner"></div>
-                  <p>Chargement des rapports...</p>
-                </div>
-
-                <div *ngIf="!loadingRapports && rapports.length === 0" class="empty-state">
-                  <i class="bi bi-file-earmark-x"></i>
-                  <h4>Aucun rapport</h4>
-                  <p>Aucun rapport n'a été soumis</p>
-                </div>
-
-                <div *ngIf="!loadingRapports && rapports.length > 0" class="reports-table">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Rapport</th>
-                        <th>Stage</th>
-                        <th>Date</th>
-                        <th>État</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let rapport of getRecentRapports()">
-                        <td>
-                          <div class="report-info">
-                            <i class="bi bi-file-earmark-pdf"></i>
-                            <span>{{ rapport.nom }}</span>
-                          </div>
-                        </td>
-                        <td>Stage #{{ rapport.stageId }}</td>
-                        <td>{{ rapport.dateUpload | date:'dd/MM/yyyy' }}</td>
-                        <td>
-                          <span class="badge" [ngClass]="getStatusBadgeClass(rapport.etat)">
-                            {{ getStatusText(rapport.etat) }}
-                          </span>
-                        </td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn btn-sm btn-outline-primary" 
-                                    (click)="downloadReport(rapport)"
-                                    title="Télécharger">
-                              <i class="bi bi-download"></i>
-                            </button>
-                            <button *ngIf="rapport.etat === 'EN_ATTENTE'" 
-                                    class="btn btn-sm btn-success" 
-                                    (click)="validateReport(rapport.id)"
-                                    title="Valider">
-                              <i class="bi bi-check"></i>
-                            </button>
-                            <button *ngIf="rapport.etat === 'EN_ATTENTE'" 
-                                    class="btn btn-sm btn-danger" 
-                                    (click)="rejectReport(rapport.id)"
-                                    title="Rejeter">
-                              <i class="bi bi-x"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .dashboard-layout {
-      margin-top: 72px;
-      min-height: calc(100vh - 72px);
-      background-color: var(--gray-50);
-    }
-
-    .dashboard-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: var(--spacing-8) var(--spacing-6);
-    }
-
-    .dashboard-header {
-      margin-bottom: var(--spacing-8);
-    }
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .header-content h1 {
-      font-size: var(--font-size-3xl);
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: var(--spacing-2);
-    }
-
-    .header-content p {
-      color: var(--gray-600);
-      font-size: var(--font-size-lg);
-    }
-
-    .header-date {
-      color: var(--gray-500);
-      font-weight: 500;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: var(--spacing-6);
-      margin-bottom: var(--spacing-8);
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: var(--radius-2xl);
-      padding: var(--spacing-6);
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--gray-200);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-4);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-xl);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      color: white;
-    }
-
-    .stat-primary .stat-icon { background-color: var(--primary-500); }
-    .stat-warning .stat-icon { background-color: var(--warning-500); }
-    .stat-success .stat-icon { background-color: var(--success-500); }
-    .stat-info .stat-icon { background-color: var(--primary-400); }
-
-    .stat-value {
-      font-size: var(--font-size-2xl);
-      font-weight: 700;
-      color: var(--gray-900);
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: var(--font-size-sm);
-      color: var(--gray-600);
-      margin-top: var(--spacing-1);
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--spacing-6);
-    }
-
-    .content-section.full-width {
-      grid-column: 1 / -1;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .card-header h3 {
-      font-size: var(--font-size-lg);
-      font-weight: 600;
-      color: var(--gray-900);
-    }
-
-    .loading-state,
-    .empty-state {
-      text-align: center;
-      padding: var(--spacing-8);
-      color: var(--gray-500);
-    }
-
-    .loading-state .spinner {
-      margin-bottom: var(--spacing-4);
-    }
-
-    .empty-state i {
-      font-size: 48px;
-      margin-bottom: var(--spacing-4);
-      color: var(--gray-300);
-    }
-
-    .requests-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-4);
-    }
-
-    .request-item {
-      padding: var(--spacing-4);
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-xl);
-      background-color: var(--gray-50);
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .request-info h5 {
-      font-size: var(--font-size-base);
-      font-weight: 600;
-      color: var(--gray-900);
-      margin-bottom: var(--spacing-2);
-    }
-
-    .request-details {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-1);
-      margin-bottom: var(--spacing-2);
-    }
-
-    .request-details span,
-    .request-period {
-      font-size: var(--font-size-sm);
-      color: var(--gray-600);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-2);
-    }
-
-    .request-actions {
-      display: flex;
-      gap: var(--spacing-2);
-    }
-
-    .stats-chart {
-      display: flex;
-      justify-content: space-around;
-      align-items: end;
-      height: 200px;
-      padding: var(--spacing-4);
-    }
-
-    .chart-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--spacing-3);
-    }
-
-    .chart-bar {
-      width: 40px;
-      height: 120px;
-      background-color: var(--gray-200);
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: end;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      width: 100%;
-      border-radius: var(--radius-md);
-      transition: height 0.5s ease;
-      min-height: 4px;
-    }
-
-    .bar-success { background-color: var(--success-500); }
-    .bar-warning { background-color: var(--warning-500); }
-    .bar-danger { background-color: var(--danger-500); }
-
-    .chart-label {
-      text-align: center;
-    }
-
-    .chart-value {
-      display: block;
-      font-size: var(--font-size-lg);
-      font-weight: 700;
-      color: var(--gray-900);
-    }
-
-    .chart-text {
-      font-size: var(--font-size-sm);
-      color: var(--gray-600);
-    }
-
-    .reports-table {
-      overflow-x: auto;
-    }
-
-    .report-info {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-2);
-    }
-
-    .report-info i {
-      color: var(--danger-500);
-      font-size: 18px;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: var(--spacing-1);
-    }
-
-    .badge-primary { background-color: var(--primary-100); color: var(--primary-800); }
-    .badge-warning { background-color: var(--warning-100); color: var(--warning-800); }
-    .badge-success { background-color: var(--success-100); color: var(--success-800); }
-    .badge-danger { background-color: var(--danger-100); color: var(--danger-800); }
-
-    @media (max-width: 768px) {
-      .dashboard-container {
-        padding: var(--spacing-4);
-      }
-
-      .header-content {
-        flex-direction: column;
-        gap: var(--spacing-4);
-      }
-
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .content-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .request-item {
-        flex-direction: column;
-        gap: var(--spacing-4);
-      }
-
-      .request-actions {
-        align-self: stretch;
-        justify-content: center;
-      }
-    }
-  `]
+  templateUrl: './encadrant-dashboard.component.html',
+  styleUrls: ['./encadrant-dashboard.component.scss']
 })
 export class EncadrantDashboardComponent implements OnInit {
   currentUser: User | null = null;
@@ -535,6 +31,22 @@ export class EncadrantDashboardComponent implements OnInit {
   loadingRapports = false;
   currentDate = new Date();
 
+
+  
+
+  // Dashboard statistics
+  stats = {
+    total: 0,
+    enAttente: 0,
+    valides: 0,
+    refuses: 0,
+    enCours: 0,
+    termines: 0,
+    totalRapports: 0
+  };
+  demandes: Stage[] = [];      // <— nouveau
+  loadingDemandes = true;     //
+
   constructor(
     private authService: AuthService,
     private stageService: StageService,
@@ -542,16 +54,47 @@ export class EncadrantDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadDemandes();        // <— appel au démarrage
     this.currentUser = this.authService.getCurrentUser();
     this.loadStages();
     this.loadRapports();
+    // this.stageService.getMesDemandes().subscribe({
+    //   next: (data) => {
+    //     this.stages = data;
+    //   },
+    //   error: (err) => {
+    //     console.error('Erreur récupération stages :', err);
+    //   }
+    // });
+    
+    // Animation cascade pour les éléments
+    setTimeout(() => {
+      this.animateElements();
+    }, 100);
   }
+     loadDemandes(): void {
+    this.loadingDemandes = true;
+    this.stageService.getMesDemandes().subscribe({
+      next: (list) => {
+        this.demandes = list;
+        this.loadingDemandes = false;
+        this.calculateStats();
+      },
+      error: (err) => {
+        this.loadingDemandes = false;
+        console.error("Erreur chargement demandes :", err);
+        this.toastService.error("Impossible de charger vos demandes");
+      }
+    });
+  }
+
 
   loadStages(): void {
     this.loading = true;
     this.stageService.getMyAssignedStages().subscribe({
       next: (stages) => {
         this.stages = stages;
+        this.calculateStats();
         this.loading = false;
       },
       error: (error) => {
@@ -562,18 +105,43 @@ export class EncadrantDashboardComponent implements OnInit {
     });
   }
 
-  loadRapports(): void {
+   loadRapports(): void {
     this.loadingRapports = true;
     this.stageService.getRapportsForEncadrant().subscribe({
-      next: (rapports) => {
-        this.rapports = rapports;
+      next: list => {
+        this.rapports = list;
         this.loadingRapports = false;
       },
-      error: (error) => {
+      error: err => {
         this.loadingRapports = false;
-        this.toastService.error('Erreur lors du chargement des rapports');
-        console.error('Error loading reports:', error);
+        this.toastService.error('Impossible de charger les rapports');
       }
+    });
+  }
+
+  calculateStats(): void {
+  this.stats = {
+    total: this.stages.length,
+    enAttente: this.stages.filter(s => 
+        s.etat === 'DEMANDE' || 
+        s.etat === 'EN_ATTENTE_VALIDATION' || 
+        s.etat === 'VALIDATION_EN_COURS').length,
+    valides: this.stages.filter(s => 
+        s.etat === 'ACCEPTE' ||  // Utiliser 'ACCEPTE'
+        s.etat === 'RAPPORT_SOUMIS').length,
+    refuses: this.stages.filter(s => s.etat === 'REFUSE').length,
+    enCours: this.stages.filter(s => s.etat === 'EN_COURS').length,
+    termines: this.stages.filter(s => s.etat === 'TERMINE').length,
+    totalRapports: this.rapports.length
+  };
+}
+
+  animateElements(): void {
+    const cards = document.querySelectorAll('.stat-card');
+    cards.forEach((card, index) => {
+      setTimeout(() => {
+        card.classList.add('animate-slideInFromBottom');
+      }, index * 150);
     });
   }
 
@@ -585,9 +153,25 @@ export class EncadrantDashboardComponent implements OnInit {
     return this.rapports.length;
   }
 
-  getStagesByStatus(status: string): Stage[] {
-    return this.stages.filter(stage => stage.etat === status);
+  getStagesByStatus(statusKey: string): Stage[] {
+  let statuses: string[] = [];
+  
+  switch(statusKey) {
+    case 'EN_ATTENTE':
+      statuses = ['DEMANDE', 'EN_ATTENTE_VALIDATION', 'VALIDATION_EN_COURS'];
+      break;
+    case 'VALIDE':
+      statuses = ['ACCEPTE', 'RAPPORT_SOUMIS'];  // Utiliser 'ACCEPTE'
+      break;
+    case 'REFUSE':
+      statuses = ['REFUSE'];
+      break;
+    default:
+      statuses = [statusKey];
   }
+  
+  return this.stages.filter(s => statuses.includes(s.etat));
+}
 
   getRecentRapports(): Rapport[] {
     return this.rapports.slice(0, 5);
@@ -599,75 +183,222 @@ export class EncadrantDashboardComponent implements OnInit {
     return (this.getStagesByStatus(status).length / total) * 100;
   }
 
-  getStatusText(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'EN_ATTENTE': 'En attente',
-      'APPROUVE': 'Approuvé',
-      'REJETE': 'Rejeté',
-      'EN_COURS': 'En cours',
-      'TERMINE': 'Terminé',
-      'VALIDE': 'Validé'
-    };
-    return statusMap[status] || status;
+  getProgressPercentage(status: string): number {
+    if (this.stats.total === 0) return 0;
+    const count = this.stats[status as keyof typeof this.stats] as number;
+    return (count / this.stats.total) * 100;
   }
 
-  getStatusBadgeClass(status: string): string {
-    const classMap: { [key: string]: string } = {
-      'EN_ATTENTE': 'badge-warning',
-      'APPROUVE': 'badge-success',
-      'REJETE': 'badge-danger',
-      'EN_COURS': 'badge-primary',
-      'TERMINE': 'badge-primary',
-      'VALIDE': 'badge-success'
-    };
-    return classMap[status] || 'badge-primary';
-  }
+  // Mettre à jour les fonctions getStatusText et getStatusBadgeClass
+// Mettre à jour les fonctions getStatusText et getStatusBadgeClass
+getStatusText(status: string): string {
+  const statusMap: { [key: string]: string } = {
+    'DEMANDE': 'Demande créée',
+    'EN_ATTENTE_VALIDATION': 'En attente de validation',
+    'VALIDATION_EN_COURS': 'Validation en cours',
+    'ACCEPTE': 'Validé', // Changer de 'VALIDE' à 'ACCEPTE'
+    'REFUSE': 'Refusé',
+    'EN_COURS': 'En cours',
+    'TERMINE': 'Terminé',
+    'RAPPORT_SOUMIS': 'Rapport soumis'
+  };
+  return statusMap[status] || status;
+}
 
-  approveStage(stageId: number): void {
-    const note = prompt('Note optionnelle pour l\'approbation:');
-    this.stageService.approveStage(stageId, note || undefined).subscribe({
-      next: (stage) => {
-        this.toastService.success('Stage approuvé avec succès');
-        this.loadStages();
-      },
-      error: (error) => {
-        this.toastService.error('Erreur lors de l\'approbation du stage');
-        console.error('Error approving stage:', error);
-      }
-    });
-  }
+getStatusBadgeClass(status: string): string {
+  const classMap: { [key: string]: string } = {
+    'DEMANDE': 'badge-neutral',
+    'EN_ATTENTE_VALIDATION': 'badge-warning',
+    'VALIDATION_EN_COURS': 'badge-accent',
+    'ACCEPTE': 'badge-success', // Changer de 'VALIDE' à 'ACCEPTE'
+    'REFUSE': 'badge-error',
+    'EN_COURS': 'badge-primary',
+    'TERMINE': 'badge-secondary',
+    'RAPPORT_SOUMIS': 'badge-info'
+  };
+  return classMap[status] || 'badge-secondary';
+}
 
-  rejectStage(stageId: number): void {
-    const note = prompt('Raison du rejet (obligatoire):');
-    if (!note) {
-      this.toastService.error('Veuillez fournir une raison pour le rejet');
-      return;
+  // approveStage(stageId: number): void {
+  //   const note = prompt('Note optionnelle pour l\'approbation:');
+  //   this.stageService.approveStage(stageId, note || undefined).subscribe({
+  //     next: (stage) => {
+  //       this.toastService.success('Stage approuvé avec succès');
+  //       this.loadStages();
+  //     },
+  //     error: (error) => {
+  //       this.toastService.error('Erreur lors de l\'approbation du stage');
+  //       console.error('Error approving stage:', error);
+  //     }
+  //   });
+  // }
+
+//  // src/app/components/encadrant-dashboard/encadrant-dashboard.component.ts
+// approveDemande(stageId: number): void {
+//   const dto: DecisionDto = { idStage: stageId, approuver: true };
+//   this.stageService.approveDecision(dto).subscribe({
+//     next: (msg) => {
+//       this.toastService.success(msg);
+//       this.loadDemandes();   // recharge la liste
+//     },
+//     error: (err) => {
+//       this.toastService.error("Erreur lors de l'approbation");
+//       console.error("Error decision:", err);
+//     }
+//   });
+// }
+
+
+
+
+//  rejectDemande(stageId: number): void {
+//   // On choisit une raison fixe ou récupérée ailleurs (pas de prompt)
+//   const raison = "Refus standard"; // ou une valeur issue d'un formulaire
+//   this.stageService.rejectStage(stageId, raison).subscribe({
+//     next: (msg) => {
+//       this.toastService.success(msg);
+//       this.loadDemandes();    // recharge la liste des demandes
+//     },
+//     error: (err) => {
+//       this.toastService.error("Erreur lors du rejet du stage");
+//       console.error("Error rejecting stage:", err);
+//     }
+//   });
+// }
+
+
+
+// Dans votre composant
+
+approveDemande(stageId: number): void {
+  const dto: DecisionDto = { idStage: stageId, approuver: true };
+  
+  this.stageService.approveDecision(dto).subscribe({
+    next: (msg) => {
+      this.toastService.success(msg); // Utilisez directement la réponse texte
+      this.loadDemandes();
+    },
+    error: (err) => {
+      this.toastService.error("Erreur lors de l'approbation");
+      console.error("Error decision:", err);
     }
+  });
+}
 
-    this.stageService.rejectStage(stageId, note).subscribe({
-      next: (stage) => {
-        this.toastService.success('Stage rejeté avec succès');
-        this.loadStages();
-      },
-      error: (error) => {
-        this.toastService.error('Erreur lors du rejet du stage');
-        console.error('Error rejecting stage:', error);
-      }
-    });
+rejectDemande(stageId: number): void {
+  const raison = "Refus standard";
+  
+  this.stageService.rejectStage(stageId, raison).subscribe({
+    next: (msg) => {
+      this.toastService.success(msg); // Utilisez directement la réponse texte
+      this.loadDemandes();
+    },
+    error: (err) => {
+      this.toastService.error("Erreur lors du rejet du stage");
+      console.error("Error rejecting stage:", err);
+    }
+  });
+}
+
+
+// downloadReport(rapport: Rapport): void {
+//   this.stageService.downloadReport(rapport.id).subscribe({
+//     next: (blob: Blob) => {
+//       const filename = rapport.nom  // ou rapport.nomFichier si votre interface l’a
+//         ? rapport.nom
+//         : `rapport_${rapport.id}.pdf`;
+
+//       this.downloadFile(blob, filename);
+//       this.toastService.success('Rapport téléchargé avec succès');
+//     },
+//     error: (err: any) => {
+//       this.toastService.error('Erreur lors du téléchargement du rapport');
+//       console.error('Error downloading report:', err);
+//     }
+//   });
+// }
+
+
+
+// downloadReport(rapport: Rapport): void {
+//   this.stageService.getRapportUrl(rapport.stageId).subscribe({ // Utilisez stageId au lieu de stage
+//     next: (url: string) => {
+//       window.open(url, '_blank');
+//       this.toastService.success('Rapport ouvert dans un nouvel onglet');
+//     },
+//     error: (err: HttpErrorResponse) => {
+//       console.error('Error getting report URL:', err);
+      
+//       if (err.status === 401) {
+//         this.toastService.error('Session expirée. Veuillez vous reconnecter.');
+//         this.authService.logout();
+//       } else if (err.status === 404) {
+//         this.toastService.error('Rapport non trouvé');
+//       } else {
+//         this.toastService.error('Erreur lors de la récupération du rapport');
+//       }
+//     }
+//   });
+// }
+
+
+// downloadReport(rapport: Rapport): void {
+//   if (!rapport.cloudinaryUrl) {
+//     this.toastService.error('URL du rapport non disponible');
+//     return;
+//   }
+
+//   // Créer un lien de téléchargement direct
+//   const downloadLink = document.createElement('a');
+//   downloadLink.href = rapport.cloudinaryUrl;
+//   downloadLink.target = '_blank';
+//   downloadLink.download = rapport.nom || 'rapport_stage.pdf';
+  
+//   // Déclenchez le téléchargement
+//   document.body.appendChild(downloadLink);
+//   downloadLink.click();
+//   document.body.removeChild(downloadLink);
+// }
+
+downloadReport(rapport: Rapport): void {
+  if (!rapport.cloudinaryUrl) {
+    this.toastService.error('URL du rapport non disponible');
+    return;
   }
 
-  downloadReport(rapport: Rapport): void {
-    this.stageService.downloadRapport(rapport.id).subscribe({
-      next: (blob) => {
-        this.downloadFile(blob, rapport.nom);
-        this.toastService.success('Rapport téléchargé avec succès');
-      },
-      error: (error) => {
-        this.toastService.error('Erreur lors du téléchargement du rapport');
-        console.error('Error downloading report:', error);
-      }
-    });
+  // Créer un lien de téléchargement direct
+  const downloadLink = document.createElement('a');
+  
+  // Ajouter un timestamp pour éviter la mise en cache
+  const uniqueUrl = `${rapport.cloudinaryUrl}?t=${new Date().getTime()}`;
+  
+  // Forcer le téléchargement avec le bon nom de fichier
+  downloadLink.href = uniqueUrl;
+  downloadLink.download = this.getSafeFileName(rapport.nom || 'rapport_stage');
+  
+  // Ouvrir dans un nouvel onglet
+  downloadLink.target = '_blank';
+  
+  // Déclencher le téléchargement
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
+
+
+
+private getSafeFileName(fileName: string): string {
+  // Supprimer les caractères spéciaux
+  let safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+  
+  // Ajouter l'extension .pdf si manquante
+  if (!safeName.toLowerCase().endsWith('.pdf')) {
+    safeName += '.pdf';
   }
+  
+  return safeName;
+}
+
 
   validateReport(rapportId: number): void {
     const commentaire = prompt('Commentaire optionnel:');

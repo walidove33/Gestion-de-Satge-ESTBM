@@ -1,6 +1,9 @@
 package com.wbs.mymovie.estbm.controller;
 
 import com.wbs.mymovie.estbm.model.Document;
+import com.wbs.mymovie.estbm.model.Encadrant;
+import com.wbs.mymovie.estbm.repository.DocumentRepository;
+import com.wbs.mymovie.estbm.repository.EncadrantRepository;
 import com.wbs.mymovie.estbm.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -22,6 +25,12 @@ public class DocumentController {
 
     @Autowired
     private DocumentService documentService;
+
+    @Autowired
+    private DocumentRepository documentRepository;
+
+    @Autowired
+    private EncadrantRepository encadrantRepository;
 
     // Admin upload un document pour un étudiant
     @PostMapping("/admin/upload")
@@ -60,5 +69,17 @@ public class DocumentController {
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+
+    // DocumentController.java
+    @GetMapping("/encadrant/mes-documents")
+    public ResponseEntity<List<Document>> getMesDocumentsEncadrant(Authentication authentication) {
+        String email = authentication.getName();
+        Encadrant encadrant = encadrantRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+
+        List<Document> documents = documentRepository.findByEncadrantId(encadrant.getId());
+        return ResponseEntity.ok(documents);
     }
 }

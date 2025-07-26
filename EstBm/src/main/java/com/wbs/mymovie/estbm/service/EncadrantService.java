@@ -25,18 +25,7 @@ public class EncadrantService {
     /**
      * Valider un stage par l'encadrant.
      */
-    public boolean validerStage(Long idEncadrant, Long idStage) {
-        Optional<Stage> stageOpt = stageRepository.findById(idStage);
-        if (stageOpt.isPresent()) {
-            Stage stage = stageOpt.get();
-            if (stage.getEncadrant() != null && stage.getEncadrant().getId().equals(idEncadrant)) {
-                stage.setEtat(EtatStage.valueOf("VALIDE"));
-                stageRepository.save(stage);
-                return true;
-            }
-        }
-        return false;
-    }
+
 
     /**
      * Refuser un stage.
@@ -70,7 +59,7 @@ public class EncadrantService {
 
     public String decisionStage(DecisionDto dto) {
         Stage s = stageRepository.findById(dto.getIdStage()).orElseThrow();
-        s.setEtat(dto.isApprouver() ? EtatStage.VALIDE : EtatStage.REFUSE);
+        s.setEtat(dto.isApprouver() ? EtatStage.ACCEPTE : EtatStage.REFUSE);
         stageRepository.save(s);
         return "OK";
     }
@@ -86,5 +75,29 @@ public class EncadrantService {
         // implémentation simple : récupérer stages puis rapports
         return List.of();
     }
+
+
+    // EncadrantService.java
+    public boolean validerStage(Long idEncadrant, Long idStage) {
+        Stage stage = stageRepository.findById(idStage)
+                .orElseThrow(() -> new RuntimeException("Stage non trouvé"));
+
+        if (!stage.getEncadrant().getId().equals(idEncadrant)) {
+            throw new RuntimeException("Vous n'êtes pas l'encadrant de ce stage");
+        }
+
+        stage.setEtat(EtatStage.ACCEPTE);
+        stageRepository.save(stage);
+        return true;
+    }
+
+    // Ajouter cette méthode
+    public List<Stage> listerDemandesPourEncadrant(Long idEncadrant, String filiere) {
+        if (filiere != null) {
+            return stageRepository.findByFiliereAndEtat(filiere, EtatStage.DEMANDE);
+        }
+        return stageRepository.findByEtat(EtatStage.DEMANDE);
+    }
+
 
 }

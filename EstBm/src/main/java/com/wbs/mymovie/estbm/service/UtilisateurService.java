@@ -2,8 +2,10 @@ package com.wbs.mymovie.estbm.service;
 
 import com.wbs.mymovie.estbm.dto.RegisterRequest;
 import com.wbs.mymovie.estbm.dto.UpdateProfileDto;
+import com.wbs.mymovie.estbm.model.Encadrant;
 import com.wbs.mymovie.estbm.model.Utilisateur;
 import com.wbs.mymovie.estbm.model.enums.Role;
+import com.wbs.mymovie.estbm.repository.EncadrantRepository;
 import com.wbs.mymovie.estbm.repository.UtilisateurRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,12 +26,14 @@ public class UtilisateurService implements UserDetailsService {
 
     private final UtilisateurRepository utilisateurRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EncadrantRepository encadrantRepository;
 
     @Autowired
     public UtilisateurService(UtilisateurRepository utilisateurRepository,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder , EncadrantRepository encadrantRepository) {
         this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
+        this.encadrantRepository = encadrantRepository;
     }
 
     @Override
@@ -84,6 +88,19 @@ public class UtilisateurService implements UserDetailsService {
         encadrant.setPassword(passwordEncoder.encode(req.getPassword()));
         encadrant.setRole(Role.ENCADRANT);
         return utilisateurRepository.save(encadrant);
+    }
+
+    // UtilisateurService.java
+    public List<Encadrant> getEncadrants() {
+        return encadrantRepository.findAll();
+    }
+
+    public List<Utilisateur> getAllUsers() {
+        return utilisateurRepository.findAll();
+    }
+
+    public List<Utilisateur> getByRole(Role role) {
+        return utilisateurRepository.findByRole(role);
     }
 
 }

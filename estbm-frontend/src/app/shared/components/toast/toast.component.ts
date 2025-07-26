@@ -1,135 +1,141 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ToastService, Toast } from '../../../services/toast.service';
-import { Subscription } from 'rxjs';
+import { Component } from "@angular/core"
+import { CommonModule } from "@angular/common"
+import  { Toast, ToastService } from "../../../services/toast.service"
 
 @Component({
-  selector: 'app-toast',
+  selector: "app-toast",
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="toast-container">
-      <div *ngFor="let toast of toasts" 
-           class="toast" 
-           [ngClass]="'toast-' + toast.type"
-           [@slideIn]>
-        <i class="bi" 
-           [ngClass]="{
-             'bi-check-circle-fill text-success': toast.type === 'success',
-             'bi-exclamation-triangle-fill text-danger': toast.type === 'error',
-             'bi-info-circle-fill text-primary': toast.type === 'info'
-           }"></i>
+    <div class="toast-container" *ngIf="(toastService.toasts$ | async) as toasts">
+      <div 
+        *ngFor="let toast of toasts"
+        class="toast"
+        [ngClass]="'toast-' + toast.type"
+        [@slideIn]
+      >
         <div class="toast-content">
-          <div class="toast-title" *ngIf="toast.title">{{ toast.title }}</div>
+          <div class="toast-icon">
+            <i [ngClass]="getIconClass(toast.type)"></i>
+          </div>
           <div class="toast-message">{{ toast.message }}</div>
+          <button 
+            class="toast-close"
+            (click)="toastService.remove(toast.id)"
+            aria-label="Fermer"
+          >
+            <i class="bi bi-x"></i>
+          </button>
         </div>
-        <button class="toast-close" (click)="removeToast(toast.id)">
-          <i class="bi bi-x"></i>
-        </button>
       </div>
     </div>
   `,
-  styles: [`
+  styles: [
+    `
     .toast-container {
       position: fixed;
-      top: var(--spacing-4);
-      right: var(--spacing-4);
-      z-index: 1050;
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-2);
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
       max-width: 400px;
     }
 
     .toast {
-      background-color: white;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-lg);
-      padding: var(--spacing-4);
-      display: flex;
-      align-items: flex-start;
-      gap: var(--spacing-3);
-      min-width: 300px;
-    }
-
-    .toast-success {
-      border-left: 4px solid var(--success-500);
-    }
-
-    .toast-error {
-      border-left: 4px solid var(--danger-500);
-    }
-
-    .toast-info {
-      border-left: 4px solid var(--primary-500);
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      animation: slideIn 0.3s ease-out;
     }
 
     .toast-content {
-      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
     }
 
-    .toast-title {
-      font-weight: 600;
-      font-size: var(--font-size-sm);
-      color: var(--gray-900);
-      margin-bottom: var(--spacing-1);
+    .toast-icon {
+      margin-right: 12px;
+      font-size: 18px;
     }
 
     .toast-message {
-      font-size: var(--font-size-sm);
-      color: var(--gray-700);
+      flex: 1;
+      font-size: 14px;
       line-height: 1.4;
     }
 
     .toast-close {
       background: none;
       border: none;
-      color: var(--gray-400);
+      font-size: 16px;
       cursor: pointer;
-      padding: 0;
-      font-size: var(--font-size-lg);
-      line-height: 1;
-      transition: color 0.15s ease;
+      padding: 4px;
+      margin-left: 8px;
+      opacity: 0.7;
+      transition: opacity 0.2s;
     }
 
     .toast-close:hover {
-      color: var(--gray-600);
+      opacity: 1;
     }
 
-    @media (max-width: 768px) {
-      .toast-container {
-        left: var(--spacing-4);
-        right: var(--spacing-4);
-        max-width: none;
-      }
+    .toast-success {
+      border-left: 4px solid #10b981;
+    }
 
-      .toast {
-        min-width: auto;
+    .toast-success .toast-icon {
+      color: #10b981;
+    }
+
+    .toast-error {
+      border-left: 4px solid #ef4444;
+    }
+
+    .toast-error .toast-icon {
+      color: #ef4444;
+    }
+
+    .toast-warning {
+      border-left: 4px solid #f59e0b;
+    }
+
+    .toast-warning .toast-icon {
+      color: #f59e0b;
+    }
+
+    .toast-info {
+      border-left: 4px solid #3b82f6;
+    }
+
+    .toast-info .toast-icon {
+      color: #3b82f6;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
       }
     }
-  `],
-  animations: []
+  `,
+  ],
 })
-export class ToastComponent implements OnInit, OnDestroy {
-  toasts: Toast[] = [];
-  private subscription: Subscription = new Subscription();
+export class ToastComponent {
+  constructor(public toastService: ToastService) {}
 
-  constructor(private toastService: ToastService) {}
-
-  ngOnInit(): void {
-    this.subscription.add(
-      this.toastService.toasts$.subscribe(toasts => {
-        this.toasts = toasts;
-      })
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-  }
-
-  removeToast(id: string): void {
-    this.toastService.remove(id);
+  getIconClass(type: Toast["type"]): string {
+    const iconMap = {
+      success: "bi bi-check-circle-fill",
+      error: "bi bi-exclamation-triangle-fill",
+      warning: "bi bi-exclamation-circle-fill",
+      info: "bi bi-info-circle-fill",
+    }
+    return iconMap[type] || "bi bi-info-circle-fill"
   }
 }

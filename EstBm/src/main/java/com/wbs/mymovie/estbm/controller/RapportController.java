@@ -1,27 +1,247 @@
+//package com.wbs.mymovie.estbm.controller;
+//
+//import com.wbs.mymovie.estbm.model.Rapport;
+//import com.wbs.mymovie.estbm.service.RapportService;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.http.ResponseEntity;
+//import org.springframework.web.bind.annotation.*;
+//
+//@RestController
+//@RequestMapping("/stages/rapports")
+//public class RapportController {
+//
+//    @Autowired
+//    private RapportService rapportService;
+//
+//    @PostMapping("/")
+//    public ResponseEntity<Rapport> uploadRapport(@RequestBody Rapport rapport) {
+//        return ResponseEntity.ok(rapportService.enregistrer(rapport));
+//    }
+//
+//    @GetMapping("/stage/{id}")
+//    public ResponseEntity<Rapport> getRapport(@PathVariable Long id) {
+//        return rapportService.parStage(id)
+//                .map(ResponseEntity::ok)
+//                .orElse(ResponseEntity.notFound().build());
+//    }
+//}
+
+
+
+// src/main/java/com/wbs/mymovie/estbm/controller/RapportController.java
 package com.wbs.mymovie.estbm.controller;
 
+import com.wbs.mymovie.estbm.exception.ResourceNotFoundException;
 import com.wbs.mymovie.estbm.model.Rapport;
-import com.wbs.mymovie.estbm.service.RapportService;
+import com.wbs.mymovie.estbm.model.Stage;
+import com.wbs.mymovie.estbm.repository.RapportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.wbs.mymovie.estbm.service.StageService;
+
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/stages/rapports")
 public class RapportController {
 
     @Autowired
-    private RapportService rapportService;
+    private StageService stageService;
 
-    @PostMapping("/")
-    public ResponseEntity<Rapport> uploadRapport(@RequestBody Rapport rapport) {
-        return ResponseEntity.ok(rapportService.enregistrer(rapport));
+
+    @Autowired
+    private RapportRepository rapportRepository;
+
+    /**
+     * Soumettre un rapport pour un stage donné.
+     */
+//    @PostMapping("/{idStage}")
+//    @PreAuthorize("hasRole('ETUDIANT')")
+//    public ResponseEntity<String> uploadRapport(
+//            @PathVariable Long idStage,
+//            @RequestParam("file") MultipartFile file) {
+//
+//        if (file.isEmpty()) {
+//            return ResponseEntity.badRequest().body("Fichier vide");
+//        }
+//
+//        if (!file.getContentType().equals("application/pdf")) {
+//            return ResponseEntity.badRequest().body("Seuls les PDF sont acceptés");
+//        }
+//
+//        String result = stageService.soumettreRapport(idStage, file);
+//        return ResponseEntity.ok(result);
+//    }
+
+
+
+    @PostMapping("/{idStage}")
+    public ResponseEntity<String> uploadRapport(
+            @PathVariable Long idStage,
+            @RequestParam("file") MultipartFile file) {
+
+        // Validation du fichier
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("Fichier vide");
+        }
+
+        if (!"application/pdf".equals(file.getContentType())) {
+            return ResponseEntity.badRequest().body("Seuls les PDF sont acceptés");
+        }
+
+        try {
+            String result = stageService.soumettreRapport(idStage, file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur: " + e.getMessage());
+        }
     }
 
-    @GetMapping("/stage/{id}")
-    public ResponseEntity<Rapport> getRapport(@PathVariable Long id) {
-        return rapportService.parStage(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    /**
+     * Télécharger le rapport associé à un stage.
+     */
+//    @GetMapping("/{idStage}/download")
+//    @PreAuthorize("hasRole('ENCADRANT')")
+//    public ResponseEntity<Resource> downloadRapport(@PathVariable Long idStage) {
+//        byte[] data = stageService.getRapportDataByStage(idStage);
+//        if (data == null) {
+//            return ResponseEntity.notFound().build();
+//        }
+//        ByteArrayResource resource = new ByteArrayResource(data);
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION,
+//                        "attachment; filename=rapport_" + idStage + ".pdf")
+//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+//                .body(resource);
+//    }
+
+
+//    @GetMapping("/{idStage}/download")
+//    public ResponseEntity<?> downloadRapport(@PathVariable Long idStage) {
+//        String url = rapportRepository.findCloudinaryUrlByStageId(idStage)
+//                .orElseThrow(() -> new ResourceNotFoundException("Rapport non trouvé"));
+//
+//        return ResponseEntity.status(HttpStatus.FOUND)
+//                .location(URI.create(url))
+//                .build();
+//    }
+//    @GetMapping("/{idStage}/download")
+//    @PreAuthorize("hasRole('ENCADRANT') or hasRole('ETUDIANT')")
+//    public ResponseEntity<Resource> downloadRapport(@PathVariable Long idStage) {
+//        Rapport rapport = rapportRepository.findByStageId(idStage)
+//                .orElseThrow(() -> new ResourceNotFoundException("Rapport non trouvé"));
+//
+//        // Téléchargez le fichier depuis Cloudinary
+//        RestTemplate restTemplate = new RestTemplate();
+//        byte[] fileContent = restTemplate.getForObject(rapport.getCloudinaryUrl(), byte[].class);
+//
+//        // Créez la réponse
+//        ByteArrayResource resource = new ByteArrayResource(fileContent);
+//
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + rapport.getNomFichier())
+//                .contentType(MediaType.APPLICATION_PDF)
+//                .body(resource);
+//    }
+
+//    @GetMapping("/{idStage}/download")
+//    @PreAuthorize("hasRole('ENCADRANT') or hasRole('ETUDIANT')")
+//    public ResponseEntity<Resource> downloadRapport(
+//            @PathVariable Long idStage,
+//            Authentication authentication) {
+//
+//        // Récupérer l'email de l'utilisateur connecté
+//        String userEmail = authentication.getName();
+//
+//        Rapport rapport = rapportRepository.findByStageId(idStage)
+//                .orElseThrow(() -> new ResourceNotFoundException("Rapport non trouvé"));
+//
+//        // Vérifier les permissions
+//        Stage stage = rapport.getStage();
+//        boolean hasAccess = false;
+//
+//        if (stage.getEtudiant() != null && stage.getEtudiant().getEmail().equals(userEmail)) {
+//            hasAccess = true; // L'étudiant propriétaire du stage
+//        }
+//
+//        if (stage.getEncadrant() != null && stage.getEncadrant().getEmail().equals(userEmail)) {
+//            hasAccess = true; // L'encadrant assigné au stage
+//        }
+//
+//        if (!hasAccess) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+//        }
+//
+//        // Télécharger depuis Cloudinary
+//        RestTemplate restTemplate = new RestTemplate();
+//        byte[] fileContent = restTemplate.getForObject(rapport.getCloudinaryUrl(), byte[].class);
+//
+//        ByteArrayResource resource = new ByteArrayResource(fileContent);
+//
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + rapport.getNomFichier())
+//                .contentType(MediaType.APPLICATION_PDF)
+//                .body(resource);
+//    }
+
+    @GetMapping("/{idStage}/download")
+    @PreAuthorize("hasRole('ENCADRANT') or hasRole('ETUDIANT')")
+    public ResponseEntity<Resource> downloadRapport(@PathVariable Long idStage) {
+        Rapport rapport = rapportRepository.findByStageId(idStage)
+                .orElseThrow(() -> new ResourceNotFoundException("Rapport non trouvé"));
+
+        // Nouvelle approche : décoder l'URL si elle est en base64
+        String decodedUrl = decodeCloudinaryUrl(rapport.getCloudinaryUrl());
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<byte[]> response = restTemplate.exchange(
+                decodedUrl,
+                HttpMethod.GET,
+                null,
+                byte[].class
+        );
+
+        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        ByteArrayResource resource = new ByteArrayResource(response.getBody());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + rapport.getNomFichier() + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(response.getBody().length)
+                .body(resource);
     }
+
+    private String decodeCloudinaryUrl(String url) {
+        if (url.startsWith("data:application/pdf;base64,")) {
+            String base64Data = url.substring(url.indexOf(",") + 1);
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
+            return new String(decodedBytes, StandardCharsets.UTF_8);
+        }
+        return url;
+    }
+
+    @GetMapping("/{idStage}/url")
+    @PreAuthorize("hasRole('ENCADRANT') or hasRole('ETUDIANT')")
+    public ResponseEntity<String> getRapportUrl(@PathVariable Long idStage) {
+        String url = stageService.getRapportUrlByStage(idStage);
+        if (url == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(url);
+    }
+
 }

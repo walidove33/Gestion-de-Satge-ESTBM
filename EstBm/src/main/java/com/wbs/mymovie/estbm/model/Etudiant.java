@@ -1,5 +1,6 @@
 package com.wbs.mymovie.estbm.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wbs.mymovie.estbm.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,6 +16,7 @@ import com.wbs.mymovie.estbm.model.Document;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"stages","utilisateur"})
 public class Etudiant {
 
     @Id
@@ -47,6 +49,7 @@ public class Etudiant {
 
     @ManyToOne
     @JoinColumn(name = "encadrant_id")
+    @JsonIgnoreProperties("etudiants") // Ajouter cette annotation
     private Encadrant encadrant;
 
     @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)

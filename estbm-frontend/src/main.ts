@@ -4,16 +4,20 @@ import { RouterModule, RouterOutlet } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app/app.routes';
-import { AuthInterceptor } from './app/interceptors/auth.interceptor';
-import { ToastComponent } from './app/shared/components/toast/toast.component';
+import { authInterceptor } from './app/interceptors/auth.interceptor'; // Import de la fonction
 import { errorInterceptor } from './app/interceptors/error.interceptor';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { ToastComponent } from './app/shared/components/toast/toast.component';
+// import { provideAnimations } from '@angular/platform-browser/animations';
 
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
+import { ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+
   imports: [RouterModule, RouterOutlet, ToastComponent],
   template: `
     <router-outlet></router-outlet>
@@ -24,18 +28,15 @@ export class App {
   title = 'Gestion des Stages - EST';
 }
 
-
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
-
 bootstrapApplication(App, {
   providers: [
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: AuthInterceptor,
-      multi: true
-    },
-    provideHttpClient(),
-    provideRouter(routes)  ]
+    provideHttpClient(
+      withInterceptors([
+        authInterceptor, // Utilisation de la fonction
+        errorInterceptor
+      ])
+    ),
+    provideRouter(routes),
+    provideNoopAnimations()
+  ]
 });
-
-

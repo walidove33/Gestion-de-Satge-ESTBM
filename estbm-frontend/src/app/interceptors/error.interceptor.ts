@@ -1,23 +1,58 @@
-import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
-import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+// import { HttpInterceptorFn } from '@angular/common/http';
+// import { inject } from '@angular/core';
+// import { AuthService } from '../services/auth.service';
+// import { Router } from '@angular/router';
+// import { catchError, throwError } from 'rxjs';
 
-export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
+// export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+//   const authService = inject(AuthService);
+//   const router = inject(Router);
 
   
 
-  return next(req).pipe(
-    catchError((error) => {
-      if (error.status === 401) {
-        alert('Session expirée. Veuillez vous reconnecter.');
-        authService.logout();
-        router.navigate(['/login']);
+//   return next(req).pipe(
+//     catchError((error) => {
+//       if (error.status === 401) {
+//         alert('Session expirée. Veuillez vous reconnecter.');
+//         authService.logout();
+//         router.navigate(['/login']);
         
+//       }
+//       return throwError(() => error);
+//     })
+//   );
+// };
+
+
+import { inject } from '@angular/core';
+import { HttpErrorResponse, HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import { ToastService } from '../services/toast.service';
+
+export const errorInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<any>, 
+  next: HttpHandlerFn
+): Observable<HttpEvent<any>> => {
+  const router = inject(Router);
+  const toastService = inject(ToastService);
+
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      console.error('🚨 HTTP Error:', error);
+      
+      if (error.status === 401) {
+        console.log('🔒 401 Unauthorized - Clearing token and redirecting to login');
+        localStorage.clear();
+        router.navigate(['/login']);
+        toastService.error('Session expirée. Veuillez vous reconnecter.');
+      } else if (error.status === 403) {
+        toastService.error('Accès refusé. Vous n\'avez pas les permissions nécessaires.');
+      } else if (error.status === 0) {
+        toastService.error('Impossible de se connecter au serveur. Vérifiez votre connexion.');
       }
+      
       return throwError(() => error);
     })
   );

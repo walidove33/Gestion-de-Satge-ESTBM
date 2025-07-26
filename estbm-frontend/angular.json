@@ -11,50 +11,36 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
-          "options": {
-            "outputPath": "dist/estbm-frontend",
-            "index": "src/index.html",
-            "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
-            "tsConfig": "tsconfig.app.json",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/global_styles.css"
-            ],
-            "scripts": []
-          },
-          "configurations": {
-            "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
-                }
-              ],
-              "outputHashing": "all"
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true
-            }
-          },
-          "defaultConfiguration": "production"
-        },
+       "builder": "@angular-devkit/build-angular:browser",
+       "options": {
+         "outputPath": "dist/estbm-frontend",
+         "index": "src/index.html",
+        "main": "src/main.ts",
+         "polyfills": ["zone.js"],
+         "tsConfig": "tsconfig.app.json",
+         "assets": [
+           { "glob": "**/*", "input": "public", "output": "/" }
+         ],
+         "styles": [
+           "src/styles.scss",
+           "src/global_styles.css",
+           "node_modules/bootstrap/dist/css/bootstrap.min.css",
+           "node_modules/@fortawesome/fontawesome-free/css/all.css"
+         ],
+         "scripts": ["node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"]
+       },
+       "configurations": {
+         "production": {
+           "outputHashing": "all"
+         },
+         "development": {
+           "optimization": false,
+           "extractLicenses": false,
+           "sourceMap": true
+         }
+       },
+       "defaultConfiguration": "production"
+     },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
@@ -85,9 +71,14 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/global_styles.css",
+              "src/styles.scss",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ]
           }
         }
       }

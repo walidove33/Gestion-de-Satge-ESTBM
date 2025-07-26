@@ -6,6 +6,7 @@ import com.wbs.mymovie.estbm.model.*;
 import com.wbs.mymovie.estbm.model.enums.Role;
 import com.wbs.mymovie.estbm.service.*;
 import com.wbs.mymovie.estbm.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
@@ -14,7 +15,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/stages/auth")
@@ -47,19 +50,17 @@ public class AuthController {
             );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
+
+            // Generate both tokens
             String token = jwtUtil.generateToken(loginRequest.getEmail());
+            String refreshToken = jwtUtil.createRefreshToken(loginRequest.getEmail());
 
             Utilisateur user = utilisateurService.findByEmail(loginRequest.getEmail());
-            return ResponseEntity.ok(new JwtResponse(token, user.getRole().name(), user));
-
-
-
-
+            return ResponseEntity.ok(new JwtResponse(token, refreshToken, user.getRole().name(), user));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email ou mot de passe invalide");
         }
     }
-
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
         if (utilisateurService.emailExiste(registerRequest.getEmail())) {
@@ -75,6 +76,8 @@ public class AuthController {
         if (etuOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Étudiant non reconnu");
         }
+
+        
 
         // 1) Création du compte Utilisateur
         Utilisateur user = new Utilisateur();
@@ -96,6 +99,30 @@ public class AuthController {
     }
 
 
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
+        try {
+            String refreshToken = request.getRefreshToken();
+
+            // Validate the refresh token
+            if (!jwtUtil.validateJwtToken(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            // Extract claims from refresh token
+            Claims claims = jwtUtil.extractAllClaims(refreshToken);
+            String email = claims.getSubject();
+
+            // Generate new tokens
+            String newToken = jwtUtil.generateToken(email);
+            String newRefreshToken = jwtUtil.createRefreshToken(email);
+
+            Utilisateur user = utilisateurService.findByEmail(email);
+            return ResponseEntity.ok(new JwtResponse(newToken, newRefreshToken, user.getRole().name(), user));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
 //    static class JwtResponse {
 //        private String token;
 //        private String role;

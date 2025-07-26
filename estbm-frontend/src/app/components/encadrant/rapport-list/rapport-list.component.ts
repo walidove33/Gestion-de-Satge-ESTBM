@@ -1,290 +1,344 @@
-import { Component, type OnInit } from "@angular/core"
+
+
+// import { Component, OnInit } from "@angular/core"
+// import { CommonModule } from "@angular/common"
+// import { FormsModule } from "@angular/forms"
+// import { RouterModule } from "@angular/router"
+// import { StageService } from "../../../services/stage.service"
+// import { ToastService } from "../../../services/toast.service"
+// import { NavbarComponent } from "../../shared/navbar/navbar.component"
+// import { Rapport } from "../../../models/stage.model"
+
+// @Component({
+//   selector: "app-rapport-list",
+//   standalone: true,
+//   imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
+//   templateUrl: './rapport-list.component.html',
+//   styleUrls: ['./rapport-list.component.scss']
+// })
+// export class RapportListComponent implements OnInit {
+//   rapports: Rapport[] = []
+//   filteredRapports: Rapport[] = []
+//   commentaires: { [key: number]: string } = {}
+//   loading = false
+//   searchTerm = ""
+//   statusFilter = ""
+
+//   constructor(
+//     private stageService: StageService,
+//     private toastService: ToastService
+//   ) {}
+
+//   ngOnInit(): void {
+//     this.loadRapports()
+    
+//     // Animation cascade
+//     setTimeout(() => {
+//       this.animateElements();
+//     }, 100);
+//   }
+
+//   loadRapports(): void {
+//     this.loading = true
+//     this.stageService.getRapportsForEncadrant().subscribe({
+//       next: (rapports) => {
+//         this.rapports = rapports
+//         this.filteredRapports = [...rapports]
+//         this.loading = false
+//       },
+//       error: (error) => {
+//         this.loading = false
+//         this.toastService.error("Erreur lors du chargement des rapports")
+//         console.error("Erreur lors du chargement des rapports:", error)
+//       },
+//     })
+//   }
+
+//   filterRapports(): void {
+//     this.filteredRapports = this.rapports.filter(rapport => {
+//       const matchesSearch = !this.searchTerm || 
+//         rapport.nom.toLowerCase().includes(this.searchTerm.toLowerCase());
+      
+//       const matchesStatus = !this.statusFilter || rapport.etat === this.statusFilter;
+      
+//       return matchesSearch && matchesStatus;
+//     });
+//   }
+
+//   getStatusClass(etat: string): string {
+//     const classMap: { [key: string]: string } = {
+//       "EN_ATTENTE": "badge-warning",
+//       "VALIDE": "badge-success",
+//       "REFUSE": "badge-error"
+//     };
+//     return classMap[etat] || "badge-secondary";
+//   }
+
+//   getStatusText(etat: string): string {
+//     const statusMap: { [key: string]: string } = {
+//       "EN_ATTENTE": "En attente",
+//       "VALIDE": "Validé",
+//       "REFUSE": "Refusé"
+//     };
+//     return statusMap[etat] || etat;
+//   }
+
+//   downloadReport(rapport: Rapport): void {
+//     if (rapport.data) {
+//       const url = window.URL.createObjectURL(rapport.data)
+//       const a = document.createElement("a")
+//       a.href = url
+//       a.download = rapport.nom
+//       a.click()
+//       window.URL.revokeObjectURL(url)
+//     } else {
+//       this.stageService.downloadRapport(rapport.id).subscribe({
+//         next: (blob) => {
+//           const url = window.URL.createObjectURL(blob)
+//           const a = document.createElement("a")
+//           a.href = url
+//           a.download = rapport.nom
+//           a.click()
+//           window.URL.revokeObjectURL(url)
+//           this.toastService.success("Rapport téléchargé avec succès")
+//         },
+//         error: (error) => {
+//           this.toastService.error("Erreur lors du téléchargement du rapport")
+//           console.error("Erreur lors du téléchargement:", error)
+//         },
+//       })
+//     }
+//   }
+
+//   validateReport(rapportId: number): void {
+//     const commentaire = this.commentaires[rapportId] || ""
+//     this.stageService.validateRapport(rapportId, commentaire).subscribe({
+//       next: (updatedRapport) => {
+//         this.loadRapports()
+//         this.commentaires[rapportId] = ""
+//         this.toastService.success("Rapport validé avec succès!")
+//       },
+//       error: (error) => {
+//         this.toastService.error("Erreur lors de la validation du rapport")
+//         console.error("Erreur lors de la validation:", error)
+//       },
+//     })
+//   }
+
+//   rejectReport(rapportId: number): void {
+//     const commentaire = this.commentaires[rapportId]
+//     if (!commentaire) {
+//       this.toastService.warning("Veuillez ajouter un commentaire pour justifier le rejet.")
+//       return
+//     }
+
+//     this.stageService.rejectRapport(rapportId, commentaire).subscribe({
+//       next: (updatedRapport) => {
+//         this.loadRapports()
+//         this.commentaires[rapportId] = ""
+//         this.toastService.success("Rapport rejeté avec succès!")
+//       },
+//       error: (error) => {
+//         this.toastService.error("Erreur lors du rejet du rapport")
+//         console.error("Erreur lors du rejet:", error)
+//       },
+//     })
+//   }
+
+//   private animateElements(): void {
+//     const items = document.querySelectorAll('.rapport-item');
+//     items.forEach((item, index) => {
+//       setTimeout(() => {
+//         item.classList.add('animate-slideInFromBottom');
+//       }, index * 100);
+//     });
+//   }
+// }
+
+
+import { Component, OnInit } from "@angular/core"
 import { CommonModule } from "@angular/common"
 import { FormsModule } from "@angular/forms"
 import { RouterModule } from "@angular/router"
-import  { StageService } from "../../../services/stage.service"
-import type { Rapport } from "../../../models/stage.model"
+import { StageService } from "../../../services/stage.service"
+import { ToastService } from "../../../services/toast.service"
+import { NavbarComponent } from "../../shared/navbar/navbar.component"
+import { Rapport } from "../../../models/stage.model"
 
 @Component({
   selector: "app-rapport-list",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
-  template: `
-    <!-- Reports Management Page: Interface for supervisors to validate student reports -->
-    <div class="container mt-4">
-      <!-- Header Section: Navigation and page title -->
-      <div class="row">
-        <div class="col-12">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>
-              <i class="bi bi-file-earmark-text me-2"></i>
-              Gestion des Rapports
-            </h2>
-            <a routerLink="/encadrant/dashboard" class="btn btn-outline-secondary">
-              <i class="bi bi-arrow-left me-2"></i>
-              Retour au tableau de bord
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content Section: Reports table with validation actions -->
-      <div class="row">
-        <div class="col-12">
-          <div class="card shadow">
-            <div class="card-header">
-              <h5 class="mb-0">
-                <i class="bi bi-list-check me-2"></i>
-                Rapports Soumis par les Étudiants
-              </h5>
-            </div>
-            <div class="card-body">
-              <!-- Loading State -->
-              <div *ngIf="loading" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Chargement...</span>
-                </div>
-                <p class="mt-3">Chargement des rapports...</p>
-              </div>
-
-              <!-- Empty State -->
-              <div *ngIf="!loading && rapports.length === 0" class="text-center py-5">
-                <i class="bi bi-file-earmark-x display-1 text-muted mb-3"></i>
-                <h5>Aucun rapport</h5>
-                <p class="text-muted">Aucun rapport n'a été soumis pour le moment.</p>
-              </div>
-
-              <!-- Reports Table: Complete table with all report details -->
-              <div class="table-responsive" *ngIf="!loading && rapports.length > 0">
-                <table class="table table-hover">
-                  <thead>
-                    <tr>
-                      <th>
-                        <i class="bi bi-person me-1"></i>
-                        Étudiant
-                      </th>
-                      <th>
-                        <i class="bi bi-building me-1"></i>
-                        Stage
-                      </th>
-                      <th>
-                        <i class="bi bi-file-earmark-text me-1"></i>
-                        Nom du Rapport
-                      </th>
-                      <th>
-                        <i class="bi bi-calendar-date me-1"></i>
-                        Date Soumission
-                      </th>
-                      <th>
-                        <i class="bi bi-flag me-1"></i>
-                        État
-                      </th>
-                      <th>
-                        <i class="bi bi-chat-left-text me-1"></i>
-                        Commentaire
-                      </th>
-                      <th>
-                        <i class="bi bi-gear me-1"></i>
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let rapport of rapports">
-                      <!-- Student Information -->
-                      <td>
-                        <strong>Étudiant #{{ rapport.id }}</strong>
-                      </td>
-                      
-                      <!-- Stage Information -->
-                      <td>
-                        <strong>Stage #{{ rapport.stageId }}</strong>
-                      </td>
-                      
-                      <!-- Report Name and Download -->
-                      <td>
-                        <span class="d-flex align-items-center">
-                          <i class="bi bi-file-earmark-pdf me-2 text-danger"></i>
-                          {{ rapport.nom }}
-                        </span>
-                      </td>
-                      
-                      <!-- Submission Date -->
-                      <td>
-                        <small>{{ rapport.dateUpload | date:'dd/MM/yyyy HH:mm' }}</small>
-                      </td>
-                      
-                      <!-- Status Badge -->
-                      <td>
-                        <span class="badge" [ngClass]="getStatusClass(rapport.etat)">
-                          {{ getStatusText(rapport.etat) }}
-                        </span>
-                      </td>
-                      
-                      <!-- Comment Section: Display existing comments and input for new ones -->
-                      <td>
-                        <div *ngIf="rapport.commentaire" class="mb-2">
-                          <small class="text-muted">{{ rapport.commentaire }}</small>
-                        </div>
-                        <textarea 
-                          class="form-control form-control-sm" 
-                          placeholder="Ajouter un commentaire..."
-                          [(ngModel)]="commentaires[rapport.id]"
-                          rows="2"
-                          [disabled]="rapport.etat !== 'EN_ATTENTE'"></textarea>
-                      </td>
-                      
-                      <!-- Actions: Download, validate, reject -->
-                      <td>
-                        <div class="btn-group-vertical btn-group-sm" role="group">
-                          <button 
-                            class="btn btn-outline-primary mb-1" 
-                            (click)="downloadReport(rapport)"
-                            title="Télécharger le rapport">
-                            <i class="bi bi-download me-1"></i>
-                            Télécharger
-                          </button>
-                          
-                          <button 
-                            class="btn btn-success mb-1" 
-                            (click)="validateReport(rapport.id)"
-                            [disabled]="rapport.etat !== 'EN_ATTENTE'"
-                            title="Valider le rapport">
-                            <i class="bi bi-check-circle me-1"></i>
-                            Valider
-                          </button>
-                          
-                          <button 
-                            class="btn btn-danger" 
-                            (click)="rejectReport(rapport.id)"
-                            [disabled]="rapport.etat !== 'EN_ATTENTE'"
-                            title="Rejeter le rapport">
-                            <i class="bi bi-x-circle me-1"></i>
-                            Rejeter
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
+  templateUrl: './rapport-list.component.html',
+  styleUrls: ['./rapport-list.component.scss']
 })
 export class RapportListComponent implements OnInit {
   rapports: Rapport[] = []
+  filteredRapports: Rapport[] = []
   commentaires: { [key: number]: string } = {}
   loading = false
+  searchTerm = ""
+  statusFilter = ""
 
-  constructor(private stageService: StageService) {}
+  constructor(
+    private stageService: StageService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.loadRapports()
+
+    setTimeout(() => {
+      this.animateElements()
+    }, 100)
   }
 
   loadRapports(): void {
     this.loading = true
     this.stageService.getRapportsForEncadrant().subscribe({
-      next: (rapports) => {
+      next: (rapports: Rapport[]) => {
         this.rapports = rapports
+        this.filteredRapports = [...rapports]
         this.loading = false
       },
-      error: (error) => {
+      error: (error: any) => {
         this.loading = false
+        this.toastService.error("Erreur lors du chargement des rapports")
         console.error("Erreur lors du chargement des rapports:", error)
-      },
+      }
+    })
+  }
+
+  filterRapports(): void {
+    this.filteredRapports = this.rapports.filter(rapport => {
+      const matchesSearch = !this.searchTerm || 
+        rapport.nom.toLowerCase().includes(this.searchTerm.toLowerCase())
+
+      const matchesStatus = !this.statusFilter || rapport.etat === this.statusFilter
+
+      return matchesSearch && matchesStatus
     })
   }
 
   getStatusClass(etat: string): string {
-    switch (etat) {
-      case "EN_ATTENTE":
-        return "bg-warning text-dark"
-      case "VALIDE":
-        return "bg-success"
-      case "REJETE":
-        return "bg-danger"
-      default:
-        return "bg-secondary"
+    const classMap: { [key: string]: string } = {
+      "EN_ATTENTE": "badge-warning",
+      "VALIDE": "badge-success",
+      "REFUSE": "badge-error"
     }
+    return classMap[etat] || "badge-secondary"
   }
 
   getStatusText(etat: string): string {
-    switch (etat) {
-      case "EN_ATTENTE":
-        return "En attente"
-      case "VALIDE":
-        return "Validé"
-      case "REJETE":
-        return "Rejeté"
-      default:
-        return etat
+    const statusMap: { [key: string]: string } = {
+      "EN_ATTENTE": "En attente",
+      "VALIDE": "Validé",
+      "REFUSE": "Refusé"
     }
+    return statusMap[etat] || etat
   }
 
-  downloadReport(rapport: Rapport): void {
-    if (rapport.data) {
-      const url = window.URL.createObjectURL(rapport.data)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = rapport.nom
-      a.click()
-      window.URL.revokeObjectURL(url)
-    } else {
-      // Fallback: download via API
-      this.stageService.downloadRapport(rapport.id).subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement("a")
-          a.href = url
-          a.download = rapport.nom
-          a.click()
-          window.URL.revokeObjectURL(url)
-        },
-        error: (error) => {
-          console.error("Erreur lors du téléchargement:", error)
-          alert("Erreur lors du téléchargement du rapport")
-        },
-      })
-    }
+downloadReport(rapport: Rapport): void {
+  if (!rapport.cloudinaryUrl) {
+    this.toastService.error('URL du rapport non disponible');
+    return;
   }
+
+  // Solution 100% frontend - contourne tous les problèmes backend
+  const downloadLink = document.createElement('a');
+  
+  // Créer une URL avec paramètre de forçage PDF
+  const downloadUrl = `${rapport.cloudinaryUrl}?fl_attachment=rapport.pdf`;
+  
+  downloadLink.href = downloadUrl;
+  downloadLink.target = '_blank';
+  downloadLink.download = this.getSafeFileName(rapport.nom || 'rapport_stage');
+  
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
+
+private getSafeFileName(fileName: string): string {
+  // Supprime les caractères spéciaux et ajoute .pdf
+  let safeName = fileName
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/\s+/g, '_');
+  
+  if (!safeName.toLowerCase().endsWith('.pdf')) {
+    safeName += '.pdf';
+  }
+  
+  return safeName;
+}
+  // downloadReport(rapport: Rapport): void {
+  //   if (rapport.data) {
+  //     const url = window.URL.createObjectURL(rapport.data)
+  //     const a = document.createElement("a")
+  //     a.href = url
+  //     a.download = rapport.nom
+  //     a.click()
+  //     window.URL.revokeObjectURL(url)
+  //   } else {
+  //     this.stageService.downloadReport(rapport.id).subscribe({
+  //       next: (blob: Blob) => {
+  //         const url = window.URL.createObjectURL(blob)
+  //         const a = document.createElement("a")
+  //         a.href = url
+  //         a.download = rapport.nom
+  //         a.click()
+  //         window.URL.revokeObjectURL(url)
+  //         this.toastService.success("Rapport téléchargé avec succès")
+  //       },
+  //       error: (error: any) => {
+  //         this.toastService.error("Erreur lors du téléchargement du rapport")
+  //         console.error("Erreur lors du téléchargement:", error)
+  //       }
+  //     })
+  //   }
+  // }
 
   validateReport(rapportId: number): void {
     const commentaire = this.commentaires[rapportId] || ""
     this.stageService.validateRapport(rapportId, commentaire).subscribe({
-      next: (updatedRapport) => {
-        this.loadRapports() // Refresh the list
-        this.commentaires[rapportId] = "" // Clear the comment input
-        alert("Rapport validé avec succès!")
+      next: (_: any) => {
+        this.loadRapports()
+        this.commentaires[rapportId] = ""
+        this.toastService.success("Rapport validé avec succès!")
       },
-      error: (error) => {
+      error: (error: any) => {
+        this.toastService.error("Erreur lors de la validation du rapport")
         console.error("Erreur lors de la validation:", error)
-        alert("Erreur lors de la validation du rapport")
-      },
+      }
     })
   }
 
   rejectReport(rapportId: number): void {
     const commentaire = this.commentaires[rapportId]
     if (!commentaire) {
-      alert("Veuillez ajouter un commentaire pour justifier le rejet.")
+      this.toastService.warning("Veuillez ajouter un commentaire pour justifier le rejet.")
       return
     }
 
     this.stageService.rejectRapport(rapportId, commentaire).subscribe({
-      next: (updatedRapport) => {
-        this.loadRapports() // Refresh the list
-        this.commentaires[rapportId] = "" // Clear the comment input
-        alert("Rapport rejeté avec succès!")
+      next: (_: any) => {
+        this.loadRapports()
+        this.commentaires[rapportId] = ""
+        this.toastService.success("Rapport rejeté avec succès!")
       },
-      error: (error) => {
+      error: (error: any) => {
+        this.toastService.error("Erreur lors du rejet du rapport")
         console.error("Erreur lors du rejet:", error)
-        alert("Erreur lors du rejet du rapport")
-      },
+      }
+    })
+  }
+
+  private animateElements(): void {
+    const items = document.querySelectorAll('.rapport-item')
+    items.forEach((item, index) => {
+      setTimeout(() => {
+        item.classList.add('animate-slideInFromBottom')
+      }, index * 100)
     })
   }
 }

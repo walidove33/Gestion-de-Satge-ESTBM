@@ -18,6 +18,9 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
+    @Value("${jwt.refreshExpiration}")  // Add this property
+    private long refreshTokenExpirationMs;  // Add this field
+
     @Autowired
     private UtilisateurService utilisateurService;
 
@@ -41,13 +44,23 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
         claims.put("email", user.getEmail());
-        claims.put("nom", user.getNom());
-        claims.put("prenom", user.getPrenom());
-        claims.put("telephone", user.getTelephone());
         claims.put("role", user.getRole().name());
-        claims.put("authorities", List.of("ROLE_" + user.getRole().name()));  // <-- IMPORTANT
+
+        // Correction: Format correct pour les authorities
+        claims.put("authorities", List.of("ROLE_" + user.getRole().name()));
 
         return createToken(claims, user.getEmail());
+    }
+
+    // Ajouter cette méthode pour vérifier l'expiration
+    public boolean isTokenExpired(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            Date expiration = claims.getExpiration();
+            return expiration.before(new Date());
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     public Claims extractAllClaims(String token) {
@@ -93,4 +106,19 @@ public class JwtUtil {
             return false;
         }
     }
+
+
+    public String createRefreshToken(String email) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshTokenExpirationMs);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+
 }
