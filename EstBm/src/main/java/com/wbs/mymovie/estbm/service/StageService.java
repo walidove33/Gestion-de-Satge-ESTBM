@@ -29,13 +29,20 @@ import java.util.stream.Collectors;
 @Service
 public class StageService {
 
-    @Autowired private StageRepository stageRepository;
-    @Autowired private EtudiantRepository etudiantRepository;
-    @Autowired private EncadrantRepository encadrantRepository;
-    @Autowired private RapportRepository rapportRepository;
-    @Autowired private DocumentModeleRepository documentModeleRepository;
-    @Autowired private DocumentRepository documentRepository;
-    @Autowired private ConventionGeneratorService conventionGeneratorService;
+    @Autowired
+    private StageRepository stageRepository;
+    @Autowired
+    private EtudiantRepository etudiantRepository;
+    @Autowired
+    private EncadrantRepository encadrantRepository;
+    @Autowired
+    private RapportRepository rapportRepository;
+    @Autowired
+    private DocumentModeleRepository documentModeleRepository;
+    @Autowired
+    private DocumentRepository documentRepository;
+    @Autowired
+    private ConventionGeneratorService conventionGeneratorService;
 
 
     @Autowired
@@ -75,7 +82,6 @@ public class StageService {
     }
 
 
-
     public List<Stage> getStagesParEncadrant(Long idEncadrant) {
         return stageRepository.findByEncadrantId(idEncadrant);
     }
@@ -85,69 +91,6 @@ public class StageService {
         return stageOpt.map(stage -> stage.getEtat().name()).orElse("Aucune demande");
     }
 
-//    public String soumettreRapport(Long idStage, MultipartFile file) {
-//        try {
-//            // 1) Validation
-//            if (file.isEmpty()) {
-//                throw new IllegalArgumentException("Fichier vide");
-//            }
-//            if (!"application/pdf".equals(file.getContentType())) {
-//                throw new IllegalArgumentException("Seuls les PDF sont acceptés");
-//            }
-//
-//            // 2) Récupérer le stage
-//            Stage stage = stageRepository.findById(idStage)
-//                    .orElseThrow(() -> new RuntimeException("Stage introuvable"));
-//
-//            // 3) Rechercher un rapport existant
-//            Optional<Rapport> optOld = rapportRepository.findByStageId(idStage);
-//            Rapport rapport;
-//            if (optOld.isPresent()) {
-//                // a) détruire l’ancien sur Cloudinary
-//                Rapport old = optOld.get();
-//                cloudinary.uploader().destroy(old.getPublicId(), ObjectUtils.emptyMap());
-//                // b) réutiliser l’entité
-//                rapport = old;
-//            } else {
-//                // pas de rapport existant : on crée une nouvelle instance
-//                rapport = new Rapport();
-//                rapport.setStage(stage);
-//            }
-//
-//            // Dans StageService.java
-//            Map<String,Object> uploadParams = ObjectUtils.asMap(
-//                    "resource_type", "auto",
-//                    "folder", "rapports/stages/",
-//                    "public_id", "rapport_" + stage.getId(), // Ajoutez un public_id explicite
-//                    "use_filename", true, // Utilisez le nom de fichier original
-//                    "unique_filename", false,
-//                    "overwrite", true,
-//                    "invalidate", true,
-//                    "resource_type", "raw", // Spécifiez le type de ressource
-//                    "type", "upload" // Rendez le fichier public
-//            );
-//            @SuppressWarnings("unchecked")
-//            Map<String,Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), uploadParams);
-//
-//            // 5) Mettre à jour l’entité
-//            rapport.setNomFichier(file.getOriginalFilename());
-//            rapport.setCloudinaryUrl((String) uploadResult.get("secure_url"));
-//            rapport.setPublicId   ((String) uploadResult.get("public_id"));
-//            rapport.setDateDepot  (LocalDate.now());
-//
-//            // 6) Sauvegarder
-//            rapportRepository.save(rapport);
-//
-//            // 7) Changer l’état du stage
-//            stage.setEtat(EtatStage.RAPPORT_SOUMIS);
-//            stageRepository.save(stage);
-//
-//            return "Rapport soumis avec succès";
-//
-//        } catch (IOException e) {
-//            throw new RuntimeException("Erreur lors de l'upload: " + e.getMessage(), e);
-//        }
-//    }
 
 
     @Async
@@ -244,7 +187,6 @@ public class StageService {
                     .body(new ByteArrayResource("Erreur de génération PDF".getBytes()));
         }
     }
-
 
 
     public ResponseEntity<?> exporterListes(String format) {
@@ -368,12 +310,12 @@ public class StageService {
         // Boucle sur chaque fichier + son type
         for (int i = 0; i < fichiers.size(); i++) {
             MultipartFile fichier = fichiers.get(i);
-            String type    = types.get(i);
+            String type = types.get(i);
 
             if (fichier == null || fichier.isEmpty()) continue;
 
             String nomFichier = System.currentTimeMillis() + "_" + fichier.getOriginalFilename();
-            Path   cible      = uploadDir.resolve(nomFichier);
+            Path cible = uploadDir.resolve(nomFichier);
             Files.copy(fichier.getInputStream(), cible, StandardCopyOption.REPLACE_EXISTING);
 
             Document doc = new Document();
@@ -407,20 +349,7 @@ public class StageService {
         return ResponseEntity.ok(response);
     }
 
-    // StageService.java
-//    public Map<String, Object> getStatistiques() {
-//        Map<String, Object> stats = new HashMap<>();
-//        stats.put("total", stageRepository.count());
-//        stats.put("enAttente", stageRepository.countByEtat(EtatStage.DEMANDE));
-//        stats.put("valides", stageRepository.countByEtat(EtatStage.ACCEPTE));
-//        stats.put("refuses", stageRepository.countByEtat(EtatStage.REFUSE));
-//        stats.put("enCours", stageRepository.countByEtat(EtatStage.EN_COURS));
-//        stats.put("rapportsSoumis", stageRepository.countByEtat(EtatStage.RAPPORT_SOUMIS));
-//        stats.put("totalEtudiants", etudiantRepository.count());
-//        stats.put("totalEncadrants", encadrantRepository.count());
-//
-//        return stats;
-//    }
+
 
 
     @Cacheable("stageStats")
@@ -442,6 +371,7 @@ public class StageService {
 
         return stats;
     }
+
     public List<Stage> getAllStages() {
         return stageRepository.findAll();
     }
@@ -472,20 +402,10 @@ public class StageService {
 
 
 
-
-
-//    public Rapport getRapportDataByStage(Long idStage) {
-//        Optional<Rapport> opt = rapportRepository.findByStageId(idStage);
-//        return opt.orElse(null);
-//    }
-
-
-
     public RapportDto getExistingRapportDto(Long stageId) {
         return rapportRepository.findDtoByStageId(stageId)
                 .orElse(null);
     }
-
 
 
     // Expose les DTO pour un encadrant
@@ -494,11 +414,6 @@ public class StageService {
     }
 
 
-
-//    public Rapport getRapportDataByStage(Long idStage) {
-//        Optional<Rapport> opt = rapportRepository.findByStageId(idStage);
-//        return opt.orElse(null);
-//    }
 
     public Rapport getRapportEntityByStage(Long idStage) {
         return rapportRepository.findByStageId(idStage)
@@ -511,4 +426,6 @@ public class StageService {
                 .findCloudinaryUrlByStageId(stageId)
                 .orElse(null);
     }
+
+
 }

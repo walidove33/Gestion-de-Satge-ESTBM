@@ -27,14 +27,12 @@ export class EncadrantDashboardComponent implements OnInit {
   currentUser: User | null = null;
   stages: Stage[] = [];
   rapports: Rapport[] = [];
+  demandes: Stage[] = [];
   loading = false;
   loadingRapports = false;
+  loadingDemandes = true;
   currentDate = new Date();
 
-
-  
-
-  // Dashboard statistics
   stats = {
     total: 0,
     enAttente: 0,
@@ -44,8 +42,9 @@ export class EncadrantDashboardComponent implements OnInit {
     termines: 0,
     totalRapports: 0
   };
-  demandes: Stage[] = [];      // <— nouveau
-  loadingDemandes = true;     //
+
+  // demandes: Stage[] = [];      // <— nouveau
+  // loadingDemandes = true;     //
 
   constructor(
     private authService: AuthService,
@@ -53,43 +52,21 @@ export class EncadrantDashboardComponent implements OnInit {
     private toastService: ToastService
   ) {}
 
-  ngOnInit(): void {
-    this.loadDemandes();        // <— appel au démarrage
+    ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
-    this.loadStages();
-    this.loadRapports();
-    // this.stageService.getMesDemandes().subscribe({
-    //   next: (data) => {
-    //     this.stages = data;
-    //   },
-    //   error: (err) => {
-    //     console.error('Erreur récupération stages :', err);
-    //   }
-    // });
-    
-    // Animation cascade pour les éléments
+    this.loadData();
     setTimeout(() => {
       this.animateElements();
     }, 100);
   }
-     loadDemandes(): void {
-    this.loadingDemandes = true;
-    this.stageService.getMesDemandes().subscribe({
-      next: (list) => {
-        this.demandes = list;
-        this.loadingDemandes = false;
-        this.calculateStats();
-      },
-      error: (err) => {
-        this.loadingDemandes = false;
-        console.error("Erreur chargement demandes :", err);
-        this.toastService.error("Impossible de charger vos demandes");
-      }
-    });
+
+ loadData(): void {
+    this.loadStages();
+    this.loadDemandes();
+    this.loadRapports();
   }
 
-
-  loadStages(): void {
+     loadStages(): void {
     this.loading = true;
     this.stageService.getMyAssignedStages().subscribe({
       next: (stages) => {
@@ -105,11 +82,27 @@ export class EncadrantDashboardComponent implements OnInit {
     });
   }
 
-   loadRapports(): void {
+  loadDemandes(): void {
+    this.loadingDemandes = true;
+    this.stageService.getMesDemandes().subscribe({
+      next: (list) => {
+        this.demandes = list;
+        this.loadingDemandes = false;
+      },
+      error: (err) => {
+        this.loadingDemandes = false;
+        console.error("Erreur chargement demandes :", err);
+        this.toastService.error("Impossible de charger vos demandes");
+      }
+    });
+  }
+
+  loadRapports(): void {
     this.loadingRapports = true;
     this.stageService.getRapportsForEncadrant().subscribe({
       next: list => {
         this.rapports = list;
+        this.calculateStats();
         this.loadingRapports = false;
       },
       error: err => {
@@ -120,21 +113,24 @@ export class EncadrantDashboardComponent implements OnInit {
   }
 
   calculateStats(): void {
-  this.stats = {
-    total: this.stages.length,
-    enAttente: this.stages.filter(s => 
-        s.etat === 'DEMANDE' || 
-        s.etat === 'EN_ATTENTE_VALIDATION' || 
-        s.etat === 'VALIDATION_EN_COURS').length,
-    valides: this.stages.filter(s => 
-        s.etat === 'ACCEPTE' ||  // Utiliser 'ACCEPTE'
-        s.etat === 'RAPPORT_SOUMIS').length,
-    refuses: this.stages.filter(s => s.etat === 'REFUSE').length,
-    enCours: this.stages.filter(s => s.etat === 'EN_COURS').length,
-    termines: this.stages.filter(s => s.etat === 'TERMINE').length,
-    totalRapports: this.rapports.length
-  };
-}
+    this.stats = {
+      total: this.stages.length,
+      enAttente: this.stages.filter(s => 
+          s.etat === 'DEMANDE' || 
+          s.etat === 'EN_ATTENTE_VALIDATION' || 
+          s.etat === 'VALIDATION_EN_COURS').length,
+      valides: this.stages.filter(s => 
+          s.etat === 'ACCEPTE' || 
+          s.etat === 'RAPPORT_SOUMIS').length,
+      refuses: this.stages.filter(s => s.etat === 'REFUSE').length,
+      enCours: this.stages.filter(s => s.etat === 'EN_COURS').length,
+      termines: this.stages.filter(s => s.etat === 'TERMINE').length,
+      totalRapports: this.rapports.length
+    };
+  }
+
+
+  
 
   animateElements(): void {
     const cards = document.querySelectorAll('.stat-card');
@@ -219,63 +215,14 @@ getStatusBadgeClass(status: string): string {
   return classMap[status] || 'badge-secondary';
 }
 
-  // approveStage(stageId: number): void {
-  //   const note = prompt('Note optionnelle pour l\'approbation:');
-  //   this.stageService.approveStage(stageId, note || undefined).subscribe({
-  //     next: (stage) => {
-  //       this.toastService.success('Stage approuvé avec succès');
-  //       this.loadStages();
-  //     },
-  //     error: (error) => {
-  //       this.toastService.error('Erreur lors de l\'approbation du stage');
-  //       console.error('Error approving stage:', error);
-  //     }
-  //   });
-  // }
-
-//  // src/app/components/encadrant-dashboard/encadrant-dashboard.component.ts
-// approveDemande(stageId: number): void {
-//   const dto: DecisionDto = { idStage: stageId, approuver: true };
-//   this.stageService.approveDecision(dto).subscribe({
-//     next: (msg) => {
-//       this.toastService.success(msg);
-//       this.loadDemandes();   // recharge la liste
-//     },
-//     error: (err) => {
-//       this.toastService.error("Erreur lors de l'approbation");
-//       console.error("Error decision:", err);
-//     }
-//   });
-// }
-
-
-
-
-//  rejectDemande(stageId: number): void {
-//   // On choisit une raison fixe ou récupérée ailleurs (pas de prompt)
-//   const raison = "Refus standard"; // ou une valeur issue d'un formulaire
-//   this.stageService.rejectStage(stageId, raison).subscribe({
-//     next: (msg) => {
-//       this.toastService.success(msg);
-//       this.loadDemandes();    // recharge la liste des demandes
-//     },
-//     error: (err) => {
-//       this.toastService.error("Erreur lors du rejet du stage");
-//       console.error("Error rejecting stage:", err);
-//     }
-//   });
-// }
-
-
-
-// Dans votre composant
 
 approveDemande(stageId: number): void {
   const dto: DecisionDto = { idStage: stageId, approuver: true };
-  
+
   this.stageService.approveDecision(dto).subscribe({
-    next: (msg) => {
-      this.toastService.success(msg); // Utilisez directement la réponse texte
+    next: (res) => {
+      // res est de type { message: string }
+      this.toastService.success(res.message);
       this.loadDemandes();
     },
     error: (err) => {
@@ -284,6 +231,7 @@ approveDemande(stageId: number): void {
     }
   });
 }
+
 
 rejectDemande(stageId: number): void {
   const raison = "Refus standard";
@@ -300,103 +248,43 @@ rejectDemande(stageId: number): void {
   });
 }
 
-
-// downloadReport(rapport: Rapport): void {
-//   this.stageService.downloadReport(rapport.id).subscribe({
-//     next: (blob: Blob) => {
-//       const filename = rapport.nom  // ou rapport.nomFichier si votre interface l’a
-//         ? rapport.nom
-//         : `rapport_${rapport.id}.pdf`;
-
-//       this.downloadFile(blob, filename);
-//       this.toastService.success('Rapport téléchargé avec succès');
-//     },
-//     error: (err: any) => {
-//       this.toastService.error('Erreur lors du téléchargement du rapport');
-//       console.error('Error downloading report:', err);
-//     }
-//   });
-// }
-
-
-
-// downloadReport(rapport: Rapport): void {
-//   this.stageService.getRapportUrl(rapport.stageId).subscribe({ // Utilisez stageId au lieu de stage
-//     next: (url: string) => {
-//       window.open(url, '_blank');
-//       this.toastService.success('Rapport ouvert dans un nouvel onglet');
-//     },
-//     error: (err: HttpErrorResponse) => {
-//       console.error('Error getting report URL:', err);
+downloadReport(stageId: number): void {
+  this.stageService.downloadRapport(stageId).subscribe({
+    next: (response) => {
+      // Extraire le nom de fichier
+      const contentDisposition = response.headers.get('Content-Disposition') || '';
+      let fileName = 'rapport_stage.pdf';
       
-//       if (err.status === 401) {
-//         this.toastService.error('Session expirée. Veuillez vous reconnecter.');
-//         this.authService.logout();
-//       } else if (err.status === 404) {
-//         this.toastService.error('Rapport non trouvé');
-//       } else {
-//         this.toastService.error('Erreur lors de la récupération du rapport');
-//       }
-//     }
-//   });
-// }
-
-
-// downloadReport(rapport: Rapport): void {
-//   if (!rapport.cloudinaryUrl) {
-//     this.toastService.error('URL du rapport non disponible');
-//     return;
-//   }
-
-//   // Créer un lien de téléchargement direct
-//   const downloadLink = document.createElement('a');
-//   downloadLink.href = rapport.cloudinaryUrl;
-//   downloadLink.target = '_blank';
-//   downloadLink.download = rapport.nom || 'rapport_stage.pdf';
-  
-//   // Déclenchez le téléchargement
-//   document.body.appendChild(downloadLink);
-//   downloadLink.click();
-//   document.body.removeChild(downloadLink);
-// }
-
-downloadReport(rapport: Rapport): void {
-  if (!rapport.cloudinaryUrl) {
-    this.toastService.error('URL du rapport non disponible');
-    return;
-  }
-
-  // Créer un lien de téléchargement direct
-  const downloadLink = document.createElement('a');
-  
-  // Ajouter un timestamp pour éviter la mise en cache
-  const uniqueUrl = `${rapport.cloudinaryUrl}?t=${new Date().getTime()}`;
-  
-  // Forcer le téléchargement avec le bon nom de fichier
-  downloadLink.href = uniqueUrl;
-  downloadLink.download = this.getSafeFileName(rapport.nom || 'rapport_stage');
-  
-  // Ouvrir dans un nouvel onglet
-  downloadLink.target = '_blank';
-  
-  // Déclencher le téléchargement
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-}
-
-
-
-private getSafeFileName(fileName: string): string {
-  // Supprimer les caractères spéciaux
-  let safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-  
-  // Ajouter l'extension .pdf si manquante
-  if (!safeName.toLowerCase().endsWith('.pdf')) {
-    safeName += '.pdf';
-  }
-  
-  return safeName;
+      const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/);
+      if (fileNameMatch && fileNameMatch[1]) {
+        fileName = fileNameMatch[1];
+        
+        // Forcer l'extension .pdf
+        if (!fileName.toLowerCase().endsWith('.pdf')) {
+          fileName += '.pdf';
+        }
+      }
+      
+      // Créer le blob
+      const blob = new Blob([response.body!], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Créer le lien
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Nettoyer
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    error: (err) => {
+      this.toastService.error('Erreur de téléchargement du rapport');
+      console.error(err);
+    }
+  });
 }
 
 

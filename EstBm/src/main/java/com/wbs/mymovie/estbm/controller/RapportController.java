@@ -108,92 +108,7 @@ public class RapportController {
         }
     }
 
-    /**
-     * Télécharger le rapport associé à un stage.
-     */
-//    @GetMapping("/{idStage}/download")
-//    @PreAuthorize("hasRole('ENCADRANT')")
-//    public ResponseEntity<Resource> downloadRapport(@PathVariable Long idStage) {
-//        byte[] data = stageService.getRapportDataByStage(idStage);
-//        if (data == null) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        ByteArrayResource resource = new ByteArrayResource(data);
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION,
-//                        "attachment; filename=rapport_" + idStage + ".pdf")
-//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-//                .body(resource);
-//    }
 
-
-//    @GetMapping("/{idStage}/download")
-//    public ResponseEntity<?> downloadRapport(@PathVariable Long idStage) {
-//        String url = rapportRepository.findCloudinaryUrlByStageId(idStage)
-//                .orElseThrow(() -> new ResourceNotFoundException("Rapport non trouvé"));
-//
-//        return ResponseEntity.status(HttpStatus.FOUND)
-//                .location(URI.create(url))
-//                .build();
-//    }
-//    @GetMapping("/{idStage}/download")
-//    @PreAuthorize("hasRole('ENCADRANT') or hasRole('ETUDIANT')")
-//    public ResponseEntity<Resource> downloadRapport(@PathVariable Long idStage) {
-//        Rapport rapport = rapportRepository.findByStageId(idStage)
-//                .orElseThrow(() -> new ResourceNotFoundException("Rapport non trouvé"));
-//
-//        // Téléchargez le fichier depuis Cloudinary
-//        RestTemplate restTemplate = new RestTemplate();
-//        byte[] fileContent = restTemplate.getForObject(rapport.getCloudinaryUrl(), byte[].class);
-//
-//        // Créez la réponse
-//        ByteArrayResource resource = new ByteArrayResource(fileContent);
-//
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + rapport.getNomFichier())
-//                .contentType(MediaType.APPLICATION_PDF)
-//                .body(resource);
-//    }
-
-//    @GetMapping("/{idStage}/download")
-//    @PreAuthorize("hasRole('ENCADRANT') or hasRole('ETUDIANT')")
-//    public ResponseEntity<Resource> downloadRapport(
-//            @PathVariable Long idStage,
-//            Authentication authentication) {
-//
-//        // Récupérer l'email de l'utilisateur connecté
-//        String userEmail = authentication.getName();
-//
-//        Rapport rapport = rapportRepository.findByStageId(idStage)
-//                .orElseThrow(() -> new ResourceNotFoundException("Rapport non trouvé"));
-//
-//        // Vérifier les permissions
-//        Stage stage = rapport.getStage();
-//        boolean hasAccess = false;
-//
-//        if (stage.getEtudiant() != null && stage.getEtudiant().getEmail().equals(userEmail)) {
-//            hasAccess = true; // L'étudiant propriétaire du stage
-//        }
-//
-//        if (stage.getEncadrant() != null && stage.getEncadrant().getEmail().equals(userEmail)) {
-//            hasAccess = true; // L'encadrant assigné au stage
-//        }
-//
-//        if (!hasAccess) {
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-//        }
-//
-//        // Télécharger depuis Cloudinary
-//        RestTemplate restTemplate = new RestTemplate();
-//        byte[] fileContent = restTemplate.getForObject(rapport.getCloudinaryUrl(), byte[].class);
-//
-//        ByteArrayResource resource = new ByteArrayResource(fileContent);
-//
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + rapport.getNomFichier())
-//                .contentType(MediaType.APPLICATION_PDF)
-//                .body(resource);
-//    }
 
     @GetMapping("/{idStage}/download")
     @PreAuthorize("hasRole('ENCADRANT') or hasRole('ETUDIANT')")
@@ -218,8 +133,24 @@ public class RapportController {
 
         ByteArrayResource resource = new ByteArrayResource(response.getBody());
 
+        // Générer un nom de fichier valide avec extension .pdf
+        String fileName = rapport.getNomFichier();
+        if (fileName == null || fileName.isEmpty()) {
+            fileName = "rapport_stage";
+        }
+
+        // Supprimer l'extension existante si présente
+        fileName = fileName.replaceAll("\\.(pdf|docx?|txt)$", "");
+
+        // Ajouter systématiquement l'extension .pdf
+        fileName += ".pdf";
+
+        // Nettoyer le nom de fichier
+        fileName = fileName.replaceAll("[^a-zA-Z0-9._-]", "_");
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + rapport.getNomFichier() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .contentLength(response.getBody().length)
                 .body(resource);

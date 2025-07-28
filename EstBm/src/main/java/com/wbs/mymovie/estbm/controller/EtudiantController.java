@@ -54,15 +54,7 @@ public class EtudiantController {
     }
 
 
-//    @GetMapping("/mes-stages")
-//    public ResponseEntity<List<Stage>> getMesStages(Authentication authentication) {
-//        String email = authentication.getName();
-//        Etudiant etudiant = etudiantRepository.findByEmail(email)
-//                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé"));
-//
-//        List<Stage> stages = stageRepository.findByEtudiantId(etudiant.getId());
-//        return ResponseEntity.ok(stages);
-//    }
+
 
     @GetMapping("/mes-stages")
     public ResponseEntity<List<StageDto>> getMesStages(Authentication authentication) {

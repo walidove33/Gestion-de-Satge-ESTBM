@@ -9,13 +9,13 @@ import com.wbs.mymovie.estbm.dto.RapportDto;
 import com.wbs.mymovie.estbm.dto.DecisionDto;
 import com.wbs.mymovie.estbm.dto.NoteDto;
 import com.wbs.mymovie.estbm.dto.StageDto;
-import com.wbs.mymovie.estbm.model.Encadrant;
-import com.wbs.mymovie.estbm.model.Rapport;
-import com.wbs.mymovie.estbm.model.Stage;
+import com.wbs.mymovie.estbm.model.*;
 import com.wbs.mymovie.estbm.repository.EncadrantRepository;
 import com.wbs.mymovie.estbm.repository.RapportRepository;
+import com.wbs.mymovie.estbm.service.CommentaireRapportService;
 import com.wbs.mymovie.estbm.service.EncadrantService;
 import com.wbs.mymovie.estbm.service.StageService;
+import com.wbs.mymovie.estbm.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -44,6 +44,9 @@ public class EncadrantController {
 
     @Autowired
     private RapportRepository rapportRepository;
+
+    @Autowired private CommentaireRapportService service;
+    @Autowired private UtilisateurService utilisateurService;
 
     @Autowired
     private Cloudinary cloudinary;
@@ -169,6 +172,35 @@ public class EncadrantController {
         return ResponseEntity.ok(dtos);
     }
 
+
+    @GetMapping("/me/commentaires")
+    public ResponseEntity<List<CommentaireRapport>> listComments(
+            Authentication auth,
+            @RequestParam(required = false) String etudiant) {
+
+        String email = auth.getName();
+        Utilisateur user = utilisateurService.findByEmail(email);
+        Encadrant enc = encadrantRepository.findByUtilisateur(user)
+                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+        List<CommentaireRapport> comments = service.listComments(enc.getId(), etudiant);
+        return ResponseEntity.ok(comments);
+    }
+
+    @PostMapping("/{rapportId}/commentaire")
+    public ResponseEntity<CommentaireRapport> addComment(
+            Authentication auth,
+            @PathVariable Long rapportId,
+            @RequestBody Map<String, String> body) {
+
+        String email = auth.getName();
+        Utilisateur user = utilisateurService.findByEmail(email);
+        Encadrant enc = encadrantRepository.findByUtilisateur(user)
+                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+
+        String texte = body.get("texte");
+        CommentaireRapport c = service.addComment(rapportId, enc.getId(), texte);
+        return ResponseEntity.ok(c);
+    }
 
 
 

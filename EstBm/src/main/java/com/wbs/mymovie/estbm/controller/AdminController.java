@@ -101,13 +101,17 @@ import com.wbs.mymovie.estbm.model.enums.Role;
 import com.wbs.mymovie.estbm.repository.EtudiantRepository;
 import com.wbs.mymovie.estbm.service.StageService;
 import com.wbs.mymovie.estbm.service.UtilisateurService;
-import org.hibernate.sql.ast.tree.update.Assignment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -216,6 +220,8 @@ public class AdminController {
         }
         return ResponseEntity.ok(utilisateurService.getByRole(role));
     }
+
+
 
 
 

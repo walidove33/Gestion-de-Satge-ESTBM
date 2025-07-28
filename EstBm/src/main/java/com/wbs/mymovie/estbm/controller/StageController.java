@@ -46,18 +46,6 @@ public class StageController {
         return stageService.getStagesParEncadrant(id);
     }
 
-//    @PreAuthorize("hasRole('ETUDIANT')")
-//    @PostMapping("/demande")
-//    public ResponseEntity<Stage> creerDemande(@RequestBody DemandeStageDto dto, Authentication authentication) {
-//        // Récupérer l'étudiant authentifié
-//        String email = authentication.getName();
-//        Etudiant etudiant = etudiantRepository.findByEmail(email)
-//                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé"));
-//
-//        dto.setIdEtudiant(etudiant.getId());
-//        return ResponseEntity.ok(stageService.creerDemande(dto));
-//    }
-
 
     @GetMapping("/etat")
     public ResponseEntity<String> suivreEtat(@RequestParam Long idEtudiant) {

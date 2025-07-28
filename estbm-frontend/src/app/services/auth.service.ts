@@ -47,30 +47,7 @@
       this.currentUserSubject.next(null)
     }
 
-    // isAuthenticated(): boolean {
-    //   const token = this.getToken()
-    //   if (!token) {
-    //     console.log("❌ No token found")
-    //     return false
-    //   }
-
-    //   try {
-    //     const decoded = this.decodeToken(token)
-    //     const isValid = decoded.exp > Date.now() / 1000
-    //     console.log("🕐 Token valid:", isValid, "Expires:", new Date(decoded.exp * 1000))
-    //     if (!isValid) {
-    //       console.log("🕐 Token expired, clearing localStorage")
-    //       localStorage.clear()
-    //       this.currentUserSubject.next(null)
-    //     }
-    //     return isValid
-    //   } catch (error) {
-    //     console.error("❌ Token decode error:", error)
-    //     localStorage.clear()
-    //     this.currentUserSubject.next(null)
-    //     return false
-    //   }
-    // }
+ 
 
 
     isAuthenticated(): boolean {
