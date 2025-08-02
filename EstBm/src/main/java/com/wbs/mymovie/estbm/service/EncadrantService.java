@@ -1,10 +1,14 @@
 package com.wbs.mymovie.estbm.service;
 
 import com.wbs.mymovie.estbm.dto.DecisionDto;
+import com.wbs.mymovie.estbm.dto.DepartementDto;
+import com.wbs.mymovie.estbm.dto.EncadrantProfileDto;
 import com.wbs.mymovie.estbm.dto.NoteDto;
+import com.wbs.mymovie.estbm.model.Departement;
 import com.wbs.mymovie.estbm.model.Encadrant;
 import com.wbs.mymovie.estbm.model.Stage;
 import com.wbs.mymovie.estbm.model.enums.EtatStage;
+import com.wbs.mymovie.estbm.repository.DepartementRepository;
 import com.wbs.mymovie.estbm.repository.EncadrantRepository;
 import com.wbs.mymovie.estbm.repository.StageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,6 +101,22 @@ public class EncadrantService {
             return stageRepository.findByFiliereAndEtat(filiere, EtatStage.DEMANDE);
         }
         return stageRepository.findByEtat(EtatStage.DEMANDE);
+    }
+
+
+    @Autowired private DepartementRepository depRepo;
+    public EncadrantProfileDto getProfile(Long id) {
+        Encadrant e = encadrantRepository.findById(id).orElseThrow();
+        Departement d = e.getDepartement();
+        EncadrantProfileDto dto = new EncadrantProfileDto();
+        dto.setId(e.getId()); dto.setNom(e.getNom()); dto.setPrenom(e.getPrenom());
+        dto.setDepartement(new DepartementDto(d.getId(), d.getNom()));
+        return dto;
+    }
+    public void assignDepartement(Long idEnc, Long idDep) {
+        Encadrant e = encadrantRepository.findById(idEnc).orElseThrow();
+        e.setDepartement(depRepo.findById(idDep).orElseThrow());
+        encadrantRepository.save(e);
     }
 
 

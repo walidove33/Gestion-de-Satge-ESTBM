@@ -12,13 +12,14 @@ import { ToastComponent } from './app/shared/components/toast/toast.component';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { ChangeDetectionStrategy } from '@angular/core';
+import { NotificationComponent } from './app/shared/components/notification/notification.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
 
-  imports: [RouterModule, RouterOutlet, ToastComponent],
+  imports: [RouterModule, RouterOutlet, ToastComponent ],
   template: `
     <router-outlet></router-outlet>
     <app-toast></app-toast>
@@ -33,7 +34,7 @@ bootstrapApplication(App, {
     provideHttpClient(
       withInterceptors([
         authInterceptor, // Utilisation de la fonction
-        errorInterceptor
+        // errorInterceptor
       ])
     ),
     provideRouter(routes),

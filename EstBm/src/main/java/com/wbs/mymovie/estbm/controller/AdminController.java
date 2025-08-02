@@ -94,11 +94,15 @@
 package com.wbs.mymovie.estbm.controller;
 
 import com.wbs.mymovie.estbm.dto.AssignmentDto;
+import com.wbs.mymovie.estbm.dto.GroupAssignmentRequest;
+import com.wbs.mymovie.estbm.dto.ReferenceDto;
 import com.wbs.mymovie.estbm.dto.RegisterRequest;
 import com.wbs.mymovie.estbm.model.Stage;
 import com.wbs.mymovie.estbm.model.Utilisateur;
 import com.wbs.mymovie.estbm.model.enums.Role;
 import com.wbs.mymovie.estbm.repository.EtudiantRepository;
+import com.wbs.mymovie.estbm.service.AdminService;
+import com.wbs.mymovie.estbm.service.EtudiantService;
 import com.wbs.mymovie.estbm.service.StageService;
 import com.wbs.mymovie.estbm.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,8 +132,11 @@ public class AdminController {
 
     @Autowired
     private StageService stageService;
+    @Autowired
+    private EtudiantService etudiantService;
+    @Autowired
+    private AdminService adminService;
 
-    /** Créer un compte encadrant */
     @PostMapping("/encadrants")
     public ResponseEntity<?> creerEncadrant(@RequestBody RegisterRequest req) {
         return ResponseEntity.ok(utilisateurService.creerCompteEncadrant(req));
@@ -171,6 +178,9 @@ public class AdminController {
     public ResponseEntity<?> assignerEncadrantAEtudiant(@RequestBody AssignmentDto dto) {
         return stageService.assignerEncadrantAEtudiant(dto);
     }
+
+
+
 
     /** Attribuer un document de convention */
     @PostMapping("/attribuer-convention")
@@ -225,6 +235,92 @@ public class AdminController {
 
 
 
+
+
+
+    @PostMapping("/assigner-encadrant-groupe")
+    public ResponseEntity<Map<String,String>> assignerEncadrantGroupe(
+            @RequestBody AssignmentDto dto) {
+        int count = adminService.assignerEncadrantParGroupe(
+                dto.getEncadrantId(),
+                dto.getDepartementId(),
+                dto.getClasseGroupeId(),
+                dto.getAnneeScolaireId());
+        return ResponseEntity.ok(Map.of(
+                "message", "Encadrant affecté à " + count + " étudiants"
+        ));
+    }
+
+
+//    @PostMapping("/assigner-encadrant-groupe")
+//    public ResponseEntity<?> assignerEncadrantGroupe(
+//            @RequestParam Long encadrantId,
+//            @RequestParam Long departementId,
+//            @RequestParam Long classeGroupeId,
+//            @RequestParam Long anneeScolaireId) {
+//
+//        int count = adminService.assignerEncadrantParGroupe(
+//                encadrantId, departementId, classeGroupeId, anneeScolaireId);
+//
+//        return ResponseEntity.ok(
+//                Map.of("message", "Encadrant affecté à " + count + " étudiants")
+//        );
+//    }
+
+//    @PostMapping("/assigner-encadrant-groupe")
+//    public ResponseEntity<?> assignerEncadrantGroupe(
+//            @RequestBody GroupAssignmentRequest request) {
+//
+//        int count = adminService.assignerEncadrantParGroupe(
+//                request.getEncadrantId(),
+//                request.getDepartementId(),
+//                request.getClasseGroupeId(),
+//                request.getAnneeScolaireId());
+//
+//        return ResponseEntity.ok(
+//                Map.of("message", "Encadrant affecté à " + count + " étudiants")
+//        );
+//    }
+
+
+
+    @GetMapping("/departements")
+    public ResponseEntity<List<ReferenceDto>> listDepartements() {
+        List<ReferenceDto> deps = adminService.listDepartements();
+        return ResponseEntity.ok(deps);
+    }
+
+//    /** Lister les groupes de la sélection */
+//    @GetMapping("/departements/{depId}/class-groups")
+//    public ResponseEntity<List<ReferenceDto>> listClassGroups(
+//            @PathVariable Long depId) {
+//        List<ReferenceDto> groups = adminService.listClassGroups(depId);
+//        return ResponseEntity.ok(groups);
+//    }
+
+    /** Lister toutes les années scolaires */
+    @GetMapping("/annee-scolaires")
+    public ResponseEntity<List<ReferenceDto>> listAnneesScolaires() {
+        List<ReferenceDto> years = adminService.listAnneesScolaires();
+        return ResponseEntity.ok(years);
+    }
+
+
+
+    // Endpoint existant (groupes par département)
+    @GetMapping("/departements/{depId}/class-groups")
+    public ResponseEntity<List<ReferenceDto>> listClassGroups(
+            @PathVariable Long depId) {
+        List<ReferenceDto> groups = adminService.listClassGroupsByDepartment(depId); // Appel modifié
+        return ResponseEntity.ok(groups);
+    }
+
+    // Nouvel endpoint (tous groupes)
+    @GetMapping("/class-groups")
+    public ResponseEntity<List<ReferenceDto>> listAllClassGroups() { // Nom cohérent
+        List<ReferenceDto> groups = adminService.listAllClassGroups(); // Appel modifié
+        return ResponseEntity.ok(groups);
+    }
 
 
 

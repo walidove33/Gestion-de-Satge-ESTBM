@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface CommentaireRapportRepository extends JpaRepository<CommentaireRapport, Long> {
     List<CommentaireRapport> findByRapportStageEncadrantId(Long encId);
-    // Pour filtrer par nom/prénom d’étudiant
     @Query("""
     SELECT c FROM CommentaireRapport c
      JOIN c.rapport r

@@ -55,4 +55,17 @@ public class Etudiant {
     @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
     private List<Document> documents;
 
+
+    @ManyToOne
+    @JoinColumn(name = "departement_id")
+    private Departement departement;
+
+    @ManyToOne
+    @JoinColumn(name = "classe_groupe_id")
+    private ClasseGroupe classeGroupe;
+
+    @ManyToOne
+    @JoinColumn(name = "annee_scolaire_id")
+    private AnneeScolaire anneeScolaire;
+
 }

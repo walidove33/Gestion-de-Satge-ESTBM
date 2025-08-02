@@ -78,12 +78,22 @@ export interface Rapport {
   cloudinaryUrl?: string; // Ajouter cette propriété
 }
 
+// export interface AssignmentRequest {
+//   encadrantId: number;
+//   departementId: number;
+//   classeGroupeId: number;
+//   anneeScolaireId: number;
+// }
+
+
+// src/app/models/assignment-request.ts
 export interface AssignmentRequest {
-  etudiantId: number;
-  etudiantNom: string;
   encadrantId: number;
-  encadrantNom: string;
+  departementId: number;
+  classeGroupeId: number;
+  anneeScolaireId: number;
 }
+
 
 export interface StudentAssignment {
   id: number;
@@ -111,4 +121,29 @@ export interface DecisionDto {
   approuver: boolean;
 }
 
+
+
+
+export interface Departement {
+  id: number;
+  nom: string;
+}
+
+export interface ClasseGroupe {
+  id: number;
+  nom: string;
+}
+
+export interface AnneeScolaire {
+  id: number;
+  libelle: string;
+}
+
+// Modifiez votre interface pour utiliser number ou string
+export interface GroupAssignmentRequest {
+  encadrantId: number | string;
+  departementId: number | string;
+  classeGroupeId: number | string;
+  anneeScolaireId: number | string;
+}
 

@@ -17,15 +17,15 @@
 //    @Override
 //    public void run(String... args) throws Exception {
 //        // Create 2 admin accounts
-//        for (int i = 1; i <= 2; i++) {
-//            RegisterRequest adminReq = new RegisterRequest();
-//            adminReq.setEmail("admin" + i + "@example.com");
-//            adminReq.setPassword("AdminPass" + i + "!");
-//            adminReq.setNom("AdminNom" + i);
-//            adminReq.setPrenom("AdminPrenom" + i);
-//            adminReq.setTelephone("06000000" + i);
-//            adminService.creerCompteAdmin(adminReq);
-//        }
+////        for (int i = 1; i <= 2; i++) {
+////            RegisterRequest adminReq = new RegisterRequest();
+////            adminReq.setEmail("admin" + i + "@example.com");
+////            adminReq.setPassword("AdminPass" + i + "!");
+////            adminReq.setNom("AdminNom" + i);
+////            adminReq.setPrenom("AdminPrenom" + i);
+////            adminReq.setTelephone("06000000" + i);
+////            adminService.creerCompteAdmin(adminReq);
+////        }
 //
 //        // Create 10 encadrant accounts
 //        for (int i = 1; i <= 10; i++) {

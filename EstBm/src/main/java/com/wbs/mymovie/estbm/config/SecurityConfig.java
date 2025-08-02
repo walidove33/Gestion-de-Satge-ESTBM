@@ -61,10 +61,14 @@ public class SecurityConfig {
                         // 2) ADMIN only
                         .requestMatchers("/stages/admin/**").hasRole("ADMIN")
 
+
+
                         // 3) ENCADRANT / ETUDIANT
                         .requestMatchers("/stages/encadrants/**").hasRole("ENCADRANT")
                         .requestMatchers("/stages/rapports/**").hasAnyRole("ENCADRANT", "ETUDIANT")
                         .requestMatchers("/stages/etudiants/**").hasRole("ETUDIANT")
+
+
 
 
 
@@ -113,7 +117,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOrigins(Arrays.asList("http://localhost:4200","http://localhost:3000"));
+        c.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
         c.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));
         c.setAllowedHeaders(Arrays.asList("Authorization","Content-Type"));
 

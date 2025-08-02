@@ -10,8 +10,7 @@ import { of } from 'rxjs'; // Ajouter cette importation
 import { CommentaireRapport } from "../models/stage.model"
 import { catchError, map, tap } from "rxjs/operators"; // Ajouter 'tap'
 import { ToastService } from "./toast.service"; // Importer ToastService
-
-
+import { GroupAssignmentRequest } from "../models/stage.model"
 @Injectable({
   providedIn: "root",
 })
@@ -42,6 +41,30 @@ private encadrantUrl = `${environment.apiUrl}/stages/encadrants`;
     return this.http.get<Stage[]>(`${this.etudUrl}/mes-stages`).pipe(catchError(this.handleError))
   }
 
+listDepartements(): Observable<{id: number, nom: string}[]> {
+  return this.http.get<{id: number, nom: string}[]>(`${this.adminUrl}/departements`)
+    .pipe(catchError(this.handleError));
+}
+
+listClassGroups(depId: number): Observable<{id: number, nom: string}[]> {
+  return this.http.get<{id: number, nom: string}[]>(
+    `${this.adminUrl}/departements/${depId}/class-groups`
+  ).pipe(catchError(this.handleError));
+}
+
+
+listAnneesScolaires(): Observable<{id: number, libelle: string}[]> {
+  return this.http.get<{id: number, libelle: string}[]>(
+    `${this.adminUrl}/annee-scolaires`
+  ).pipe(catchError(this.handleError));
+}
+
+// stage.service.ts
+listAllClassGroups(): Observable<{id: number, nom: string}[]> {
+  return this.http.get<{id: number, nom: string}[]>(
+    `${this.adminUrl}/class-groups`
+  ).pipe(catchError(this.handleError));
+}
 
 
   createDemande(data: StageRequest): Observable<Stage> {
@@ -230,12 +253,12 @@ getStageStats(): Observable<any> {
   );
 }
 
-  assignEncadrant(dto: AssignmentRequest): Observable<any> {
-    return this.http.post<any>(
-      `${this.adminUrl}/assigner-encadrant`, 
-      dto
-    ).pipe(catchError(this.handleError));
-  }
+  // assignEncadrant(dto: AssignmentRequest): Observable<any> {
+  //   return this.http.post<any>(
+  //     `${this.adminUrl}/assigner-encadrant`, 
+  //     dto
+  //   ).pipe(catchError(this.handleError));
+  // }
 
  getAssignments(): Observable<any[]> {
   return this.http.get<any[]>(`${this.adminUrl}/assignments`)
@@ -349,7 +372,55 @@ addComment(rapportId: number, texte: string): Observable<CommentaireRapport> {
   ).pipe(catchError(this.handleError));
 }
 
+// // dans stage.service.ts
+// assignEncadrantParGroupe(
+//   dto: GroupAssignmentRequest
+// ): Observable<{ message: string }> {
+//   return this.http.post<{ message: string }>(
+//     `${this.adminUrl}/assigner-encadrant-groupe`,
+//     dto
+//   );
+// }
 
+
+// assignEncadrantGroupe(
+//   dto: GroupAssignmentRequest
+// ): Observable<{ message: string }> {
+//   return this.http.post<{ message: string }>(
+//     `${this.adminUrl}/assigner-encadrant-groupe`,
+//     dto
+//   );
+// }
+
+
+assignerEncadrantGroupe(dto: GroupAssignmentRequest): Observable<{ message: string }> {
+  return this.http
+    .post<{ message: string }>(
+      `${this.adminUrl}/assigner-encadrant-groupe`,
+      dto
+    )
+    .pipe(
+      catchError(this.handleError)   // ✅ bien avec catchError
+    );
+}
+
+
+
+//  assignerEncadrantGroupe(dto: GroupAssignmentRequest): Observable<{ message: string }> {
+//     const params = new HttpParams()
+//       .set('encadrantId',    dto.encadrantId.toString())
+//       .set('departementId',  dto.departementId.toString())
+//       .set('classeGroupeId', dto.classeGroupeId.toString())
+//       .set('anneeScolaireId',dto.anneeScolaireId.toString());
+
+//     return this.http
+//       .post<{ message: string }>(
+//         `${this.adminUrl}/assigner-encadrant-groupe`,
+//         null,
+//         { params }
+//       )
+//       .pipe(this.handleError);
+//   }
 
 
 

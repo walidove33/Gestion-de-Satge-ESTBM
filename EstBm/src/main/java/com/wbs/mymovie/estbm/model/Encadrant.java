@@ -36,4 +36,9 @@ public class Encadrant {
     @OneToMany(mappedBy = "encadrant")
     @JsonIgnoreProperties("encadrant") // Ajouter cette annotation
     private List<Etudiant> etudiants;
+
+
+    @ManyToOne
+    @JoinColumn(name = "departement_id")
+    private Departement departement;
 }

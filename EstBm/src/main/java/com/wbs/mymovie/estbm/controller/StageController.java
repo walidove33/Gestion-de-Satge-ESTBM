@@ -32,8 +32,6 @@ public class StageController {
     private EtudiantRepository etudiantRepository;
 
 
-    // Dans StageController.java
-
 
 
     @GetMapping("/etudiant/{id}")
