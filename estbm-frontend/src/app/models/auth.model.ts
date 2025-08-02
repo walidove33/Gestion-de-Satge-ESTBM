@@ -5,18 +5,19 @@ export interface LoginRequest {
   password: string;
 }
 
+// src/app/models/auth.model.ts
 export interface RegisterRequest {
-  email: string;
-  password: string;
   nom: string;
   prenom: string;
+  specialite: string;     // au lieu de filiere/niveau
+  codeApogee: string;
+  codeMassar: string;
+  dateNaissance: string;  // format "YYYY-MM-DD"
+  email: string;
+  password: string;
   telephone: string;
-  codeApogee?: string;
-  codeMassar?: string;
-  dateNaissance?: string;
-  filiere?: string;
-  niveau?: string;
 }
+
 
 export interface AuthResponse {
   token: string;
@@ -30,4 +31,6 @@ export interface AuthResponse {
     role: string;
     telephone?: string;
   };
+
+  
 }

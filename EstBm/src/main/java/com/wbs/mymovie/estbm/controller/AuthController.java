@@ -84,6 +84,9 @@ public class AuthController {
         user.setEmail(registerRequest.getEmail());
         user.setPassword(registerRequest.getPassword());
         user.setRole(Role.ETUDIANT);
+        user.setNom(registerRequest.getNom());
+        user.setPrenom(registerRequest.getPrenom());
+        user.setTelephone(registerRequest.getTelephone());
         user = utilisateurService.enregistrer(user);
 
         // 2) Mise à jour de l'entité Etudiant
@@ -93,6 +96,8 @@ public class AuthController {
         etu.setEmail(registerRequest.getEmail());    // ← ici
         etu.setNom(registerRequest.getNom());        // ← ici
         etu.setPrenom(registerRequest.getPrenom());  // ← ici
+        etu.setPassword(registerRequest.getPassword());
+        etu.setRole(Role.ETUDIANT);
         etudiantService.enregistrer(etu);
 
         return ResponseEntity.ok("Inscription réussie !");

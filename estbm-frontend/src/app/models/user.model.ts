@@ -13,6 +13,7 @@ export interface User {
   specialite?: string;
   filiere?: string;
   niveau?: string;
+  
 }
 
 export interface CreateEncadrantRequest {

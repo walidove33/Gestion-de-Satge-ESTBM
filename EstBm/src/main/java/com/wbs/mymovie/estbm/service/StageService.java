@@ -92,6 +92,80 @@ public class StageService {
     }
 
 
+//
+//    @Async
+//    public String soumettreRapport(Long idStage, MultipartFile file) {
+//        try {
+//            // 1) Validation
+//            if (file.isEmpty()) {
+//                throw new IllegalArgumentException("Fichier vide");
+//            }
+//            if (!"application/pdf".equals(file.getContentType())) {
+//                throw new IllegalArgumentException("Seuls les PDF sont acceptés");
+//            }
+//
+//            // 2) Récupérer le stage
+//            Stage stage = stageRepository.findById(idStage)
+//                    .orElseThrow(() -> new RuntimeException("Stage introuvable"));
+//
+//            // 3) Rechercher un rapport existant
+//            Optional<Rapport> optOld = rapportRepository.findByStageId(idStage);
+//            Rapport rapport;
+//            if (optOld.isPresent()) {
+//                // a) détruire l'ancien sur Cloudinary
+//                Rapport old = optOld.get();
+//                cloudinary.uploader().destroy(old.getPublicId(), ObjectUtils.emptyMap());
+//                // b) réutiliser l'entité
+//                rapport = old;
+//            } else {
+//                // pas de rapport existant : on crée une nouvelle instance
+//                rapport = new Rapport();
+//                rapport.setStage(stage);
+//            }
+//
+//            // 4) Configuration d'upload optimisée pour les PDF
+//            Map<String, Object> uploadParams = ObjectUtils.asMap(
+//                    "resource_type", "raw",       // Type explicite pour les fichiers bruts
+//                    "folder", "rapports/stages/",
+//                    "public_id", "rapport_" + stage.getId() + "_" + System.currentTimeMillis(),
+//                    "use_filename", false,
+//                    "unique_filename", true,
+//                    "overwrite", false,
+//                    "invalidate", true,
+//                    "quality", "auto:best",
+//                    "type", "upload",
+//                    "access_mode", "public",      // Accès public
+//                    "allowed_formats", "pdf",     // Format explicitement autorisé
+//                    "format", "pdf"               // Force le format de sortie
+//            );
+//
+//
+//            // 5) Upload vers Cloudinary
+//            @SuppressWarnings("unchecked")
+//            Map<String, Object> uploadResult = cloudinary.uploader().upload(
+//                    file.getBytes(),
+//                    uploadParams
+//            );
+//
+//            // 6) Mettre à jour l'entité avec les nouvelles informations
+//            rapport.setNomFichier(file.getOriginalFilename());
+//            rapport.setCloudinaryUrl((String) uploadResult.get("secure_url"));
+//            rapport.setPublicId((String) uploadResult.get("public_id"));
+//            rapport.setDateDepot(LocalDate.now());
+//
+//            // 7) Sauvegarder en base
+//            rapportRepository.save(rapport);
+//
+//            // 8) Mettre à jour l'état du stage
+//            stage.setEtat(EtatStage.RAPPORT_SOUMIS);
+//            stageRepository.save(stage);
+//
+//            return "Rapport soumis avec succès";
+//
+//        } catch (IOException e) {
+//            throw new RuntimeException("Erreur lors de l'upload: " + e.getMessage(), e);
+//        }
+//    }
 
     @Async
     public String soumettreRapport(Long idStage, MultipartFile file) {
@@ -104,9 +178,13 @@ public class StageService {
                 throw new IllegalArgumentException("Seuls les PDF sont acceptés");
             }
 
-            // 2) Récupérer le stage
+            // 2) Récupérer le stage (et via lui l'étudiant)
             Stage stage = stageRepository.findById(idStage)
                     .orElseThrow(() -> new RuntimeException("Stage introuvable"));
+            Etudiant etu = stage.getEtudiant();
+            if (etu == null) {
+                throw new RuntimeException("Aucun étudiant rattaché à ce stage");
+            }
 
             // 3) Rechercher un rapport existant
             Optional<Rapport> optOld = rapportRepository.findByStageId(idStage);
@@ -125,7 +203,7 @@ public class StageService {
 
             // 4) Configuration d'upload optimisée pour les PDF
             Map<String, Object> uploadParams = ObjectUtils.asMap(
-                    "resource_type", "raw",       // Type explicite pour les fichiers bruts
+                    "resource_type", "raw",
                     "folder", "rapports/stages/",
                     "public_id", "rapport_" + stage.getId() + "_" + System.currentTimeMillis(),
                     "use_filename", false,
@@ -134,11 +212,10 @@ public class StageService {
                     "invalidate", true,
                     "quality", "auto:best",
                     "type", "upload",
-                    "access_mode", "public",      // Accès public
-                    "allowed_formats", "pdf",     // Format explicitement autorisé
-                    "format", "pdf"               // Force le format de sortie
+                    "access_mode", "public",
+                    "allowed_formats", "pdf",
+                    "format", "pdf"
             );
-
 
             // 5) Upload vers Cloudinary
             @SuppressWarnings("unchecked")
@@ -153,6 +230,12 @@ public class StageService {
             rapport.setPublicId((String) uploadResult.get("public_id"));
             rapport.setDateDepot(LocalDate.now());
 
+            // 6bis) Peupler les relations pour qu'elles soient persistées
+            rapport.setEtudiant(etu);
+            rapport.setDepartement(etu.getDepartement());
+            rapport.setClasseGroupe(etu.getClasseGroupe());
+            rapport.setAnneeScolaire(etu.getAnneeScolaire());
+
             // 7) Sauvegarder en base
             rapportRepository.save(rapport);
 
@@ -166,6 +249,7 @@ public class StageService {
             throw new RuntimeException("Erreur lors de l'upload: " + e.getMessage(), e);
         }
     }
+
 
 
     public ResponseEntity<Resource> genererEtTelechargerConvention(Long idStage) {
@@ -426,6 +510,9 @@ public class StageService {
                 .findCloudinaryUrlByStageId(stageId)
                 .orElse(null);
     }
+
+
+
 
 
 }

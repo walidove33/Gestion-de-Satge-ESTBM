@@ -351,7 +351,7 @@ import {
 } from "../../../shared/components/empty-state/empty-state.component"
 
 import type { User } from "../../../models/user.model"
-import type { Stage, Rapport, DecisionDto } from "../../../models/stage.model"
+import type { Stage, RapportDetails, DecisionDto } from "../../../models/stage.model"
 
 @Component({
   selector: "app-encadrant-dashboard",
@@ -365,7 +365,8 @@ export class EncadrantDashboardComponent implements OnInit, OnDestroy {
 
   currentUser: User | null = null
   stages: Stage[] = []
-  rapports: Rapport[] = []
+  // rapports: Rapport[] = []
+  rapports: RapportDetails[] = [];
   demandes: Stage[] = []
   loading = false
   loadingRapports = false
@@ -533,9 +534,13 @@ export class EncadrantDashboardComponent implements OnInit, OnDestroy {
     return this.stages.filter((s) => statuses.includes(s.etat))
   }
 
-  getRecentRapports(): Rapport[] {
-    return this.rapports.slice(0, 5)
-  }
+  // getRecentRapports(): Rapport[] {
+  //   return this.rapports.slice(0, 5)
+  // }
+
+  getRecentRapports(): RapportDetails[] {
+  return this.rapports.slice(0, 5);
+}
 
   getValidationPercentage(status: string): number {
     const total = this.getTotalStages()

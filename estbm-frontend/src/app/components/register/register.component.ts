@@ -16,15 +16,23 @@ import { RegisterRequest } from '../../models/auth.model';
 })
 export class RegisterComponent {
   userData: RegisterRequest = {
-    codeApogee: '',
-    codeMassar: '',
-    dateNaissance: '',
-    nom: '',
-    prenom: '',
-    email: '',
-    telephone: '',
-    password: ''
-  };
+  nom: '',
+  prenom: '',
+  specialite: '',        // <— ajouté
+  codeApogee: '',
+  codeMassar: '',
+  dateNaissance: '',
+  email: '',
+  password: '',
+  telephone: ''
+};
+
+specialites = [
+  'INFORMATIQUE',
+  'GENIE_CIVIL',
+  'ELECTROMECANIQUE',
+  /* ... */
+];
   
   errorMessage = '';
   successMessage = '';
@@ -41,6 +49,8 @@ export class RegisterComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
+    console.log('➡️ Register payload:', this.userData);
+
     this.authService.register(this.userData).subscribe({
       next: (response) => {
         this.loading = false;
@@ -50,11 +60,27 @@ export class RegisterComponent {
           this.router.navigate(['/login']);
         }, 2000);
       },
-      error: (error) => {
-        this.loading = false;
-        this.errorMessage = 'Erreur lors de l\'inscription. Vérifiez vos informations.';
-        this.toastService.error('Erreur lors de l\'inscription');
-      }
+      error: (err) => {
+  this.loading = false;
+
+  // 1️⃣ Log the full HttpErrorResponse
+  console.error('🔴 Register error response object:', err);
+
+  // 2️⃣ Extract the server’s message (it may be a plain string or JSON)
+  let serverMsg = 'Erreur inattendue';
+  if (typeof err.error === 'string') {
+    serverMsg = err.error;
+  } else if (err.error && err.error.message) {
+    serverMsg = err.error.message;
+  } else if (err.statusText) {
+    serverMsg = err.statusText;
+  }
+
+  // 3️⃣ Show it in the template and via toast
+  this.errorMessage = serverMsg;
+  this.toastService.error(serverMsg);
+}
+
     });
   }
 }

@@ -31,10 +31,12 @@
 // src/main/java/com/wbs/mymovie/estbm/controller/RapportController.java
 package com.wbs.mymovie.estbm.controller;
 
+import com.wbs.mymovie.estbm.dto.RapportDetailsDto;
 import com.wbs.mymovie.estbm.exception.ResourceNotFoundException;
 import com.wbs.mymovie.estbm.model.Rapport;
 import com.wbs.mymovie.estbm.model.Stage;
 import com.wbs.mymovie.estbm.repository.RapportRepository;
+import com.wbs.mymovie.estbm.service.RapportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -51,6 +53,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/stages/rapports")
@@ -62,6 +65,9 @@ public class RapportController {
 
     @Autowired
     private RapportRepository rapportRepository;
+
+    @Autowired
+    private RapportService rapportService;
 
     /**
      * Soumettre un rapport pour un stage donné.
@@ -173,6 +179,20 @@ public class RapportController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(url);
+    }
+
+    @GetMapping("/encadrant/{encadrantId}")
+    // @PreAuthorize("hasRole('ENCADRANT')")
+    public ResponseEntity<List<RapportDetailsDto>> listRapports(
+            @PathVariable Long encadrantId,
+            @RequestParam(required = false) Long departementId,
+            @RequestParam(required = false) Long classeGroupeId,
+            @RequestParam(required = false) Long anneeScolaireId
+    ) {
+        List<RapportDetailsDto> dtos = rapportService.getRapportsByEncadrant(
+                encadrantId, departementId, classeGroupeId, anneeScolaireId
+        );
+        return ResponseEntity.ok(dtos);
     }
 
 }

@@ -4,11 +4,8 @@ package com.wbs.mymovie.estbm.controller;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.nimbusds.jose.util.Resource;
-import com.wbs.mymovie.estbm.dto.RapportDto;
+import com.wbs.mymovie.estbm.dto.*;
 
-import com.wbs.mymovie.estbm.dto.DecisionDto;
-import com.wbs.mymovie.estbm.dto.NoteDto;
-import com.wbs.mymovie.estbm.dto.StageDto;
 import com.wbs.mymovie.estbm.model.*;
 import com.wbs.mymovie.estbm.repository.EncadrantRepository;
 import com.wbs.mymovie.estbm.repository.RapportRepository;
@@ -137,6 +134,23 @@ public class EncadrantController {
 
         // Appeler **uniquement** la projection DTO
         List<RapportDto> dtos = rapportRepository.findDtoByEncadrantId(enc.getId());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/me/rapports/details")
+    public ResponseEntity<List<RapportDetailsDto>> getMyRapportsDetails(Authentication auth) {
+        Encadrant enc = encadrantRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Encadrant non trouvé"));
+
+        // appel de la méthode JPQL détaillée, sans filtres (tous null)
+        List<RapportDetailsDto> dtos = rapportRepository
+                .findDetailsByEncadrantAndFilters(
+                        enc.getId(),
+                        null,  // departementId
+                        null,  // classeGroupeId
+                        null   // anneeScolaireId
+                );
 
         return ResponseEntity.ok(dtos);
     }

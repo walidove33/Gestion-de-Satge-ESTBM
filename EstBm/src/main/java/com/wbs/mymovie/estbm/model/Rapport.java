@@ -50,4 +50,21 @@ public class Rapport {
     @OneToOne
     @JoinColumn(name = "stage_id")
     private Stage stage;
+
+    @ManyToOne
+    @JoinColumn(name = "etudiant_id")
+    private Etudiant etudiant;
+
+    @ManyToOne
+    @JoinColumn(name = "departement_id")
+    private Departement departement;
+
+    @ManyToOne
+    @JoinColumn(name = "classe_groupe_id")
+    private ClasseGroupe classeGroupe;
+
+    @ManyToOne
+    @JoinColumn(name = "annee_scolaire_id")
+    private AnneeScolaire anneeScolaire;
+
 }

@@ -2,7 +2,7 @@
 import { Injectable } from "@angular/core"
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from "@angular/common/http"
 import { Observable, throwError } from "rxjs"
-import { Stage, StageRequest, Rapport, AssignmentRequest } from "../models/stage.model"
+import { Stage, StageRequest, Rapport, RapportDetails } from "../models/stage.model"
 import { AuthService } from "./auth.service"
 import {environment} from "../environement"
 import { DecisionDto } from '../models/stage.model';
@@ -183,12 +183,18 @@ rejectStage(stageId: number, commentaire: string): Observable<string> {
       .pipe(catchError(this.handleError))
   }
 
-  getRapportsForEncadrant(): Observable<Rapport[]> {
-    return this.http
-      .get<Rapport[]>(`${this.encadrantUrl}/me/rapports`)
-      .pipe(catchError(this.handleError));
-  }
+  // getRapportsForEncadrant(): Observable<Rapport[]> {
+  //   return this.http
+  //     .get<Rapport[]>(`${this.encadrantUrl}/me/rapports`)
+  //     .pipe(catchError(this.handleError));
+  // }
 
+  // src/app/services/stage.service.ts
+getRapportsForEncadrant(): Observable<RapportDetails[]> {
+  return this.http
+    .get<RapportDetails[]>(`${this.encadrantUrl}/me/rapports/details`)
+    .pipe(catchError(this.handleError));
+}
 
   /** Liste les rapports (métadonnées) pour un stage */
 getRapportsByStage(stageId: number): Observable<Rapport[]> {

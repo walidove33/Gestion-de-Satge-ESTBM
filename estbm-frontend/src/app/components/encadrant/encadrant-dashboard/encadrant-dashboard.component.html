@@ -617,118 +617,137 @@
       </div>
 
       <!-- Rapports récents -->
-      <app-card 
-        title="Rapports récents"
-        subtitle="Derniers rapports soumis par vos étudiants"
-        headerIcon="bi-file-earmark-pdf"
-        variant="success"
-        class="report-card animate-fadeIn"
-        style="animation-delay: 0.4s">
-        
-        <div slot="header-actions">
-          <a routerLink="/encadrant/rapports" class="btn btn-outline-primary">
+    <app-card 
+    title="Rapports récents"
+    subtitle="Derniers rapports soumis par vos étudiants"
+    headerIcon="bi-file-earmark-pdf"
+    variant="success"
+    class="report-card animate-fadeIn"
+    style="animation-delay: 0.4s">
+    
+    <div slot="header-actions">
+        <a routerLink="/encadrant/rapports" class="btn btn-outline-primary">
             <i class="bi bi-eye me-1"></i>
             Voir tous les rapports
-          </a>
-        </div>
+        </a>
+    </div>
 
-        <app-loading 
-          *ngIf="loadingRapports" 
-          size="md" 
-          message="Chargement des rapports...">
-        </app-loading>
+    <app-loading 
+        *ngIf="loadingRapports" 
+        size="md" 
+        message="Chargement des rapports...">
+    </app-loading>
 
-        <app-empty-state 
-          *ngIf="!loadingRapports && rapports.length === 0"
-          title="Aucun rapport"
-          description="Aucun rapport n'a été soumis pour le moment"
-          icon="bi-file-earmark-x"
-          variant="warning"
-          [actions]="emptyRapportsActions">
-        </app-empty-state>
+    <app-empty-state 
+        *ngIf="!loadingRapports && rapports.length === 0"
+        title="Aucun rapport"
+        description="Aucun rapport n'a été soumis pour le moment"
+        icon="bi-file-earmark-x"
+        variant="warning"
+        [actions]="emptyRapportsActions">
+    </app-empty-state>
 
-        <div *ngIf="!loadingRapports && rapports.length > 0" class="reports-table">
-          <div class="table-wrapper">
+    <div *ngIf="!loadingRapports && rapports.length > 0" class="reports-table">
+        <div class="table-wrapper">
             <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>
-                    <i class="bi bi-file-earmark-text me-1"></i>
-                    Rapport
-                  </th>
-                  <th>
-                    <i class="bi bi-briefcase me-1"></i>
-                    Stage
-                  </th>
-                  <th>
-                    <i class="bi bi-calendar-date me-1"></i>
-                    Date
-                  </th>
-                  <th>
-                    <i class="bi bi-flag me-1"></i>
-                    État
-                  </th>
-                  <th>
-                    <i class="bi bi-gear me-1"></i>
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let rapport of getRecentRapports()" class="table-row">
-                  <td>
-                    <div class="report-info">
-                      <div class="report-icon">
-                        <i class="bi bi-file-earmark-pdf"></i>
-                      </div>
-                      <div class="report-details">
-                        <span class="report-name">{{ rapport.nom }}</span>
-                        <small class="report-size">PDF Document</small>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="stage-badge">Stage #{{ rapport.stageId }}</span>
-                  </td>
-                  <td>
-                    <div class="date-info">
-                      <i class="bi bi-calendar-event me-1"></i>
-                      {{ rapport.dateUpload | date:'dd/MM/yyyy' }}
-                    </div>
-                  </td>
-                  <td>
-                    <span class="status-badge" [ngClass]="getStatusBadgeClass(rapport.etat)">
-                      <i class="bi bi-circle-fill me-1"></i>
-                      {{ getStatusText(rapport.etat) }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="actions-cell">
-                      <button class="btn btn-sm btn-outline-primary"
-                              (click)="downloadReport(rapport.stageId)"
-                              title="Télécharger">
-                        <i class="bi bi-download"></i>
-                      </button>
-                      <button *ngIf="rapport.etat === 'EN_ATTENTE'"
-                               class="btn btn-sm btn-success"
-                               (click)="validateReport(rapport.id)"
-                              title="Valider">
-                        <i class="bi bi-check"></i>
-                      </button>
-                      <button *ngIf="rapport.etat === 'EN_ATTENTE'"
-                               class="btn btn-sm btn-danger"
-                               (click)="rejectReport(rapport.id)"
-                              title="Rejeter">
-                        <i class="bi bi-x"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
+                <thead>
+                    <tr>
+                        <th>
+                            <i class="bi bi-file-earmark-text me-1"></i>
+                            Rapport
+                        </th>
+                        <th>
+                            <i class="bi bi-person me-1"></i>
+                            Étudiant
+                        </th>
+                        <th>
+                            <i class="bi bi-building me-1"></i>
+                            Classe & Département
+                        </th>
+                        <th>
+                            <i class="bi bi-calendar-date me-1"></i>
+                            Date
+                        </th>
+                        <th>
+                            <i class="bi bi-flag me-1"></i>
+                            État
+                        </th>
+                        <th>
+                            <i class="bi bi-gear me-1"></i>
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let rapport of getRecentRapports()" class="table-row">
+                        <td>
+                            <div class="report-info">
+                                <div class="report-icon">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </div>
+                                <div class="report-details">
+                                    <span class="report-name">{{ rapport.nomFichier }}</span>
+                                    <small class="report-size">
+                                        {{ rapport.anneeScolaireValeur }}
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="student-info">
+                                <div>{{ rapport.etudiantPrenom }} {{ rapport.etudiantNom }}</div>
+                                <small class="text-muted">
+                                    ID: {{ rapport.etudiantId }}
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="class-department">
+                                <span>{{ rapport.classeGroupeNom }}</span>
+                                <small class="text-muted">
+                                    {{ rapport.departementNom }}
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-info">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                {{ rapport.dateDepot | date:'dd/MM/yyyy' }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge" [ngClass]="getStatusBadgeClass(rapport.etat)">
+                                <i class="bi bi-circle-fill me-1"></i>
+                                {{ getStatusText(rapport.etat) }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn btn-sm btn-outline-primary"
+                                        (click)="downloadReport(rapport.stageId)"
+                                        title="Télécharger">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                                <button *ngIf="rapport.etat === 'EN_ATTENTE'"
+                                        class="btn btn-sm btn-success"
+                                        (click)="validateReport(rapport.rapportId)"
+                                        title="Valider">
+                                    <i class="bi bi-check"></i>
+                                </button>
+                                <button *ngIf="rapport.etat === 'EN_ATTENTE'"
+                                        class="btn btn-sm btn-danger"
+                                        (click)="rejectReport(rapport.rapportId)"
+                                        title="Rejeter">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
             </table>
-          </div>
         </div>
-      </app-card>
+    </div>
+</app-card>
 
       <!-- Actions rapides -->
       <div class="quick-actions animate-fadeIn" style="animation-delay: 0.6s">

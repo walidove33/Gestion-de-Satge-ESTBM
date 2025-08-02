@@ -122,6 +122,30 @@ export interface DecisionDto {
 }
 
 
+// src/app/models/stage.model.ts
+export interface RapportDetails {
+etat: string;
+  rapportId: number;
+  nomFichier: string;
+  dateDepot: string;
+  stageId: number;
+  cloudinaryUrl: string;
+  
+  etudiantId: number;
+  etudiantNom: string;
+  etudiantPrenom: string;
+  
+  classeGroupeId: number;
+  classeGroupeNom: string;
+  
+  departementId: number;
+  departementNom: string;
+  
+  anneeScolaireId: number;
+  anneeScolaireValeur: string;
+}
+
+
 
 
 export interface Departement {
